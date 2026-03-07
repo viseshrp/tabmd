@@ -1,7 +1,7 @@
 import {
 	initEditor,
 	getEditorContent,
-	hideEditor,
+	showPreview,
 	showEditor,
 	setFocusMode,
 	toggleFocusMode,
@@ -10,11 +10,6 @@ import { readNote, type NoteRecord } from "../shared/notes";
 import { generateUUID } from "../shared/uuid";
 import { initSaveTracking } from "./save";
 import { initTitleActions } from "./title";
-import {
-	renderPreview,
-	showPreviewContainer,
-	hidePreviewContainer,
-} from "./preview";
 import { performExport } from "./export";
 import { readSettings } from "../shared/storage";
 
@@ -68,21 +63,16 @@ async function bootstrap() {
 	function showEditorTab(): void {
 		editorBtn?.classList.add("active");
 		previewBtn?.classList.remove("active");
-		hidePreviewContainer();
 		showEditor();
 	}
 
 	editorBtn?.addEventListener("click", showEditorTab);
 
-	previewBtn?.addEventListener("click", async () => {
+	previewBtn?.addEventListener("click", () => {
 		setFocusMode(false);
 		previewBtn.classList.add("active");
 		editorBtn?.classList.remove("active");
-		hideEditor();
-
-		// Render on click
-		const html = await renderPreview(getEditorContent());
-		showPreviewContainer(html);
+		showPreview();
 	});
 
 	// 5. Actions

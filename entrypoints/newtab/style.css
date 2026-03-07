@@ -279,11 +279,25 @@ body.focus-mode-active .EasyMDEContainer .CodeMirror {
   display: none !important;
 }
 
-/* Preview typography keeps the reading surface airy while reusing the same card shell as the editor. */
-#preview-container {
+.EasyMDEContainer .editor-preview-full {
+  inset: 0;
+  overflow-y: auto;
+  background: transparent;
+}
+
+/* EasyMDE owns the preview surface, and these classes keep it visually aligned with the writing canvas. */
+.EasyMDEContainer .tabmd-preview {
   max-width: 880px;
   margin: 0 auto;
   padding: 30px 40px 48px;
+  box-sizing: border-box;
+  min-height: 100%;
+  color: var(--md-sys-color-on-background);
+  background: transparent;
+}
+
+body.focus-mode-active .EasyMDEContainer .tabmd-preview {
+  padding-top: 88px;
 }
 
 .markdown-body {
@@ -384,7 +398,7 @@ body.focus-mode-active .EasyMDEContainer .CodeMirror {
     grid-template-columns: 1fr;
   }
 
-  #preview-container {
+  .EasyMDEContainer .tabmd-preview {
     padding: 24px 20px 36px;
   }
 }

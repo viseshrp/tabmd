@@ -5,18 +5,41 @@ const mockFocus = vi.fn();
 const mockRefresh = vi.fn();
 
 class MockEasyMDE {
-	static lastOptions: { initialValue?: string } | null = null;
+	static lastOptions: {
+		initialValue?: string;
+		previewClass?: string | readonly string[];
+		previewRender?: (markdownPlaintext: string) => string | null;
+	} | null = null;
 
 	codemirror = {
 		focus: mockFocus,
+		getWrapperElement: () => this.wrapperElement,
 		refresh: mockRefresh,
 	};
 
 	private currentValue: string;
+	private previewActive = false;
+	private readonly previewElement: HTMLDivElement;
+	private readonly wrapperElement: HTMLDivElement;
 
-	constructor(options: { initialValue?: string }) {
+	constructor(
+		private readonly options: {
+			initialValue?: string;
+			previewClass?: string | readonly string[];
+			previewRender?: (markdownPlaintext: string) => string | null;
+		},
+	) {
 		MockEasyMDE.lastOptions = options;
 		this.currentValue = options.initialValue ?? "";
+		this.wrapperElement = document.createElement("div");
+		this.previewElement = document.createElement("div");
+		this.previewElement.className = "editor-preview-full";
+		this.wrapperElement.appendChild(document.createElement("div"));
+		this.wrapperElement.appendChild(this.previewElement);
+
+		// EasyMDE replaces the textarea in-place, so the preview wrapper must live in the document for DOM queries.
+		const editorContainer = document.getElementById("editor-container");
+		editorContainer?.appendChild(this.wrapperElement);
 	}
 
 	value(nextValue?: string): string | undefined {
@@ -26,6 +49,25 @@ class MockEasyMDE {
 		}
 
 		return this.currentValue;
+	}
+
+	isPreviewActive(): boolean {
+		return this.previewActive;
+	}
+
+	static togglePreview(editor: MockEasyMDE): void {
+		editor.previewActive = !editor.previewActive;
+		editor.previewElement.classList.toggle(
+			"editor-preview-active",
+			editor.previewActive,
+		);
+
+		if (!editor.previewActive || !editor.options.previewRender) {
+			return;
+		}
+
+		editor.previewElement.innerHTML =
+			editor.options.previewRender(editor.currentValue) ?? "";
 	}
 }
 
@@ -58,6 +100,10 @@ describe("editor focus mode helpers", () => {
 		initEditor("# Draft");
 
 		expect(MockEasyMDE.lastOptions?.initialValue).toBe("# Draft");
+		expect(MockEasyMDE.lastOptions?.previewClass).toEqual([
+			"markdown-body",
+			"tabmd-preview",
+		]);
 		expect(getEditorContent()).toBe("# Draft");
 	});
 
@@ -65,9 +111,10 @@ describe("editor focus mode helpers", () => {
 		const { initEditor, toggleFocusMode } = await import(
 			"../../entrypoints/newtab/editor"
 		);
-		const focusButton = document.getElementById(
-			"btn-focus",
-		) as HTMLButtonElement;
+		const focusButton = document.getElementById("btn-focus");
+		if (!(focusButton instanceof HTMLButtonElement)) {
+			throw new Error("Expected #btn-focus to be a button.");
+		}
 
 		initEditor("Body");
 		const isActive = toggleFocusMode();
@@ -86,9 +133,10 @@ describe("editor focus mode helpers", () => {
 		const { initEditor, toggleFocusMode } = await import(
 			"../../entrypoints/newtab/editor"
 		);
-		const focusButton = document.getElementById(
-			"btn-focus",
-		) as HTMLButtonElement;
+		const focusButton = document.getElementById("btn-focus");
+		if (!(focusButton instanceof HTMLButtonElement)) {
+			throw new Error("Expected #btn-focus to be a button.");
+		}
 
 		initEditor("Body");
 		toggleFocusMode();
@@ -106,9 +154,10 @@ describe("editor focus mode helpers", () => {
 		const { hideEditor, initEditor, showEditor } = await import(
 			"../../entrypoints/newtab/editor"
 		);
-		const editorContainer = document.getElementById(
-			"editor-container",
-		) as HTMLDivElement;
+		const editorContainer = document.getElementById("editor-container");
+		if (!(editorContainer instanceof HTMLDivElement)) {
+			throw new Error("Expected #editor-container to be a div.");
+		}
 
 		initEditor("Body");
 		mockRefresh.mockReset();
@@ -118,5 +167,25 @@ describe("editor focus mode helpers", () => {
 
 		expect(editorContainer.hidden).toBe(false);
 		expect(mockRefresh).toHaveBeenCalledTimes(1);
+	});
+
+	it("routes preview through EasyMDE and refreshes repeated preview clicks", async () => {
+		const { initEditor, showPreview } = await import(
+			"../../entrypoints/newtab/editor"
+		);
+
+		initEditor("# First");
+		showPreview();
+
+		const previewElement = document.querySelector(".editor-preview-active");
+		if (!(previewElement instanceof HTMLDivElement)) {
+			throw new Error("Expected EasyMDE preview to be a div.");
+		}
+		expect(previewElement.innerHTML).toContain("<h1>First</h1>");
+
+		previewElement.innerHTML = "<p>stale</p>";
+		showPreview();
+
+		expect(previewElement.innerHTML).toContain("<h1>First</h1>");
 	});
 });

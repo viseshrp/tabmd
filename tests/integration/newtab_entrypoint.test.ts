@@ -6,14 +6,12 @@ import { flushMicrotasks } from "../helpers/flush";
 const initEditor = vi.fn();
 const getEditorContent = vi.fn(() => "Editor body");
 const hideEditor = vi.fn();
+const showPreview = vi.fn();
 const showEditor = vi.fn();
 const setFocusMode = vi.fn();
 const toggleFocusMode = vi.fn();
 const initSaveTracking = vi.fn();
 const initTitleActions = vi.fn();
-const renderPreview = vi.fn(async () => "<p>preview</p>");
-const showPreviewContainer = vi.fn();
-const hidePreviewContainer = vi.fn();
 const performExport = vi.fn();
 const generateUUID = vi.fn(() => "generated-id");
 const readNote = vi.fn();
@@ -23,6 +21,7 @@ vi.mock("../../entrypoints/newtab/editor", () => ({
 	initEditor,
 	getEditorContent,
 	hideEditor,
+	showPreview,
 	showEditor,
 	setFocusMode,
 	toggleFocusMode,
@@ -34,12 +33,6 @@ vi.mock("../../entrypoints/newtab/save", () => ({
 
 vi.mock("../../entrypoints/newtab/title", () => ({
 	initTitleActions,
-}));
-
-vi.mock("../../entrypoints/newtab/preview", () => ({
-	renderPreview,
-	showPreviewContainer,
-	hidePreviewContainer,
 }));
 
 vi.mock("../../entrypoints/newtab/export", () => ({
@@ -65,15 +58,12 @@ describe("newtab entrypoint", () => {
 		getEditorContent.mockReset();
 		getEditorContent.mockReturnValue("Editor body");
 		hideEditor.mockReset();
+		showPreview.mockReset();
 		showEditor.mockReset();
 		setFocusMode.mockReset();
 		toggleFocusMode.mockReset();
 		initSaveTracking.mockReset();
 		initTitleActions.mockReset();
-		renderPreview.mockReset();
-		renderPreview.mockResolvedValue("<p>preview</p>");
-		showPreviewContainer.mockReset();
-		hidePreviewContainer.mockReset();
 		performExport.mockReset();
 		generateUUID.mockReset();
 		generateUUID.mockReturnValue("generated-id");
@@ -88,7 +78,6 @@ describe("newtab entrypoint", () => {
       <button id="btn-export"></button>
       <button id="btn-options"></button>
       <div id="editor-container"></div>
-      <div id="preview-container" hidden></div>
       <h1 id="note-title-display"></h1>
       <input id="note-title-input" hidden />
       <textarea id="editor-textarea"></textarea>
@@ -121,21 +110,17 @@ describe("newtab entrypoint", () => {
 			?.dispatchEvent(new MouseEvent("click"));
 		await flushMicrotasks();
 		expect(setFocusMode).toHaveBeenCalledWith(false);
-		expect(hideEditor).toHaveBeenCalled();
-		expect(renderPreview).toHaveBeenCalledWith("Editor body");
-		expect(showPreviewContainer).toHaveBeenCalledWith("<p>preview</p>");
+		expect(showPreview).toHaveBeenCalled();
 
 		document
 			.getElementById("btn-focus")
 			?.dispatchEvent(new MouseEvent("click"));
-		expect(hidePreviewContainer).toHaveBeenCalled();
 		expect(showEditor).toHaveBeenCalled();
 		expect(toggleFocusMode).toHaveBeenCalled();
 
 		document
 			.getElementById("tab-editor")
 			?.dispatchEvent(new MouseEvent("click"));
-		expect(hidePreviewContainer).toHaveBeenCalled();
 		expect(showEditor).toHaveBeenCalled();
 
 		document
