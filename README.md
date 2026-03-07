@@ -20,7 +20,7 @@ The current implementation is intentionally narrow:
 - Automatic note titles derived from the first meaningful line
 - Manual title overrides
 - Export current note as a `.md` file
-- Focus mode using the editor's fullscreen support
+- Focus mode that expands the editor to the full workspace while keeping an explicit exit control visible
 - Theme setting with `os`, `light`, and `dark` modes
 - Recent-notes popup limited to the 20 most recently edited notes
 - Full notes page with client-side search across titles and body content

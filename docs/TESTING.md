@@ -13,6 +13,7 @@ pnpm test
 2. Place integration-level page renderings in `tests/integration/`.
 3. Keep shared test-only utilities under `tests/helpers/` so production code stays free of test scaffolding.
 4. Prefer `tests/helpers/flush.ts` for async entrypoint settling instead of `setTimeout(..., 0)` waits.
+5. Cover focus-mode transitions with event-driven assertions so layout behavior stays deterministic without time-based waiting.
 
 ### CI Process
 Every pull request on GitHub will automatically trigger the `ci.yml` matrix which invokes:

@@ -12,6 +12,7 @@ This document outlines the testing strategy for the TabMD extension to ensure lo
 | **Note Title Parser** | `tests/unit/note_title.test.ts` | Derivation of manual titles, extracting `# Headings` as automatic titles, fallback to "Untitled". |
 | **Notes Storage** | `tests/unit/notes_storage.test.ts` | Operations checking empty states locally and mapping correct `modifiedAt`/`createdAt` chronologies explicitly. |
 | **Blob Export** | `tests/unit/export.test.ts` | File name sanitization over the export sequence via Anchor clicks. |
+| **Focus Mode** | `tests/unit/editor_focus_mode.test.ts` | Verifies the focus toggle updates UI state, exits on `Escape`, and refreshes the editor layout when the editor becomes visible again. |
 | **Runtime Initializations** | `tests/integration/` | Background service loading checks and visual UI rendering configurations. |
 | **Popup Navigation** | `tests/integration/popup_entrypoint.test.ts` | Verifies the recent-notes popup opens the built full-list route (`list.html`) instead of the source entrypoint path. |
 

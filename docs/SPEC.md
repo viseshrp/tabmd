@@ -101,7 +101,7 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
 ### 5.8 Toggle Focus Mode
 
 1. On the editor page, the user activates focus mode.
-2. EasyMDE enters fullscreen mode — the editor fills the viewport.
+2. Focus mode hides the surrounding workspace chrome and expands the editor to fill the viewport.
 3. The user exits focus mode via the same toggle or Escape.
 
 ---
@@ -138,7 +138,7 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
   - Preview content renders only when the Preview tab is first clicked (not eagerly).
   - Re-renders each time the Preview tab is clicked.
   - Supports: GFM tables, task lists, fenced code blocks with syntax highlighting.
-- Focus mode uses EasyMDE's built-in fullscreen toggle.
+- Focus mode keeps the editor visible, hides the surrounding workspace chrome, and leaves the focus toggle available as an exit control.
 - Export downloads the current note content as `<title>.md`.
 - Options page link opens `options.html` in a new tab.
 
@@ -328,11 +328,10 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
 
 ### 7.12 Focus / Fullscreen Mode
 
-- Focus mode uses EasyMDE's built-in fullscreen toggle.
-- A button/action on the editor page triggers `easymde.toggleFullScreen()`.
-- In fullscreen, the EasyMDE editor fills the entire viewport.
-- Exit via the same button or Escape key (EasyMDE handles Escape natively).
-- No custom fullscreen architecture.
+- A button/action on the editor page enters focus mode for the visible editor surface.
+- Focus mode hides the title card, tabs, export action, and settings action so the editor fills the viewport.
+- The focus toggle remains visible as the explicit exit control.
+- Escape exits focus mode without relying on timers or delayed layout hacks.
 
 ---
 
@@ -453,8 +452,9 @@ Notes are stored as an object keyed by note ID for O(1) lookup.
 
 ### 10.7 Focus Mode
 
-- [ ] Focus mode button enters EasyMDE fullscreen.
-- [ ] Escape exits fullscreen.
+- [ ] Focus mode button expands the visible editor surface to the viewport.
+- [ ] The focus toggle remains available while focus mode is active.
+- [ ] Escape exits focus mode.
 
 ### 10.8 Export
 
