@@ -1,71 +1,133 @@
-import type { NoteRecord } from '../shared/storage';
-import { resolveNoteTitle } from '../shared/note_title';
+import type { NoteRecord } from "../shared/storage";
+import { resolveNoteTitle } from "../shared/note_title";
 
 export type SearchResult = {
-    note: NoteRecord;
-    title: string;
-    snippet: string;
+	note: NoteRecord;
+	title: string;
+	snippet: string;
 };
 
-export function filterNotes(notes: NoteRecord[], query: string): SearchResult[] {
-    const normQuery = query.trim().toLowerCase();
+export type SearchIndexEntry = {
+	note: NoteRecord;
+	title: string;
+	normalizedTitle: string;
+	normalizedContent: string;
+	defaultSnippet: string;
+};
 
-    const results: SearchResult[] = [];
+const EMPTY_NOTE_SNIPPET = "Empty note";
+const MAX_SNIPPET_LENGTH = 100;
 
-    for (const note of notes) {
-        const title = resolveNoteTitle(note);
-        const normTitle = title.toLowerCase();
-        const normContent = note.content.toLowerCase();
-
-        if (normQuery === '') {
-            // Empty query -> show all, with a basic snippet
-            results.push({
-                note,
-                title,
-                snippet: getBestSnippet(note.content, '')
-            });
-            continue;
-        }
-
-        // Match in title
-        if (normTitle.includes(normQuery)) {
-            results.push({
-                note,
-                title,
-                snippet: getBestSnippet(note.content, '')
-            });
-            continue;
-        }
-
-        // Match in content
-        if (normContent.includes(normQuery)) {
-            results.push({
-                note,
-                title,
-                snippet: getBestSnippet(note.content, normQuery)
-            });
-        }
-    }
-
-    return results;
+export function filterNotes(
+	notes: NoteRecord[],
+	query: string,
+): SearchResult[] {
+	return filterIndexedNotes(buildSearchIndex(notes), query);
 }
 
-function getBestSnippet(content: string, query: string): string {
-    const lines = content.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+export function buildSearchIndex(notes: NoteRecord[]): SearchIndexEntry[] {
+	return notes.map((note) => {
+		const title = resolveNoteTitle(note);
+		return {
+			note,
+			title,
+			normalizedTitle: title.toLowerCase(),
+			normalizedContent: note.content.toLowerCase(),
+			// Cache the default snippet once so repeated searches do not rescan the same note content.
+			defaultSnippet: getDefaultSnippet(note.content),
+		};
+	});
+}
 
-    if (lines.length === 0) return 'Empty note';
+export function filterIndexedNotes(
+	index: SearchIndexEntry[],
+	query: string,
+): SearchResult[] {
+	const normalizedQuery = query.trim().toLowerCase();
+	const results: SearchResult[] = [];
 
-    if (!query) {
-        // If no query or title match, return first non-empty line (that isn't a heading if possible)
-        // Or just the first line
-        return lines[0].substring(0, 100);
-    }
+	for (const entry of index) {
+		if (normalizedQuery === "") {
+			results.push(createSearchResult(entry, entry.defaultSnippet));
+			continue;
+		}
 
-    // Find line with query
-    const matchLine = lines.find(l => l.toLowerCase().includes(query));
-    if (matchLine) {
-        return matchLine.substring(0, 100);
-    }
+		if (entry.normalizedTitle.includes(normalizedQuery)) {
+			results.push(createSearchResult(entry, entry.defaultSnippet));
+			continue;
+		}
 
-    return lines[0].substring(0, 100);
+		if (entry.normalizedContent.includes(normalizedQuery)) {
+			results.push(
+				createSearchResult(
+					entry,
+					getBestSnippet(
+						entry.note.content,
+						normalizedQuery,
+						entry.defaultSnippet,
+					),
+				),
+			);
+		}
+	}
+
+	return results;
+}
+
+function createSearchResult(
+	entry: SearchIndexEntry,
+	snippet: string,
+): SearchResult {
+	return {
+		note: entry.note,
+		title: entry.title,
+		snippet,
+	};
+}
+
+function getDefaultSnippet(content: string): string {
+	const firstNonEmptyLine = findMatchingLine(content, null);
+	return firstNonEmptyLine ?? EMPTY_NOTE_SNIPPET;
+}
+
+function getBestSnippet(
+	content: string,
+	normalizedQuery: string,
+	fallbackSnippet: string,
+): string {
+	const matchingLine = findMatchingLine(content, normalizedQuery);
+	if (matchingLine) {
+		return matchingLine;
+	}
+
+	return fallbackSnippet;
+}
+
+function findMatchingLine(
+	content: string,
+	normalizedQuery: string | null,
+): string | null {
+	let lineStart = 0;
+
+	for (let index = 0; index <= content.length; index += 1) {
+		if (index !== content.length && content[index] !== "\n") {
+			continue;
+		}
+
+		const trimmedLine = content.slice(lineStart, index).trim();
+		lineStart = index + 1;
+
+		if (trimmedLine.length === 0) {
+			continue;
+		}
+
+		if (
+			normalizedQuery === null ||
+			trimmedLine.toLowerCase().includes(normalizedQuery)
+		) {
+			return trimmedLine.slice(0, MAX_SNIPPET_LENGTH);
+		}
+	}
+
+	return null;
 }
