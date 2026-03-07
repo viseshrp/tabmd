@@ -1,6 +1,6 @@
 {
   "name": "tabmd",
-  "description": "Material-style WXT extension skeleton.",
+  "description": "Local-first Markdown notes in every new tab.",
   "private": true,
   "version": "1.0.0",
   "type": "module",

@@ -36,14 +36,14 @@ async function bootstrap() {
 
                 a.addEventListener('click', (e) => {
                     e.preventDefault();
-                    chrome.tabs.create({ url: chrome.runtime.getURL('newtab.html') + '#' + note.id });
+                    chrome.tabs.create({ url: `${chrome.runtime.getURL('newtab.html')}#${note.id}` });
                 });
 
                 li.appendChild(a);
                 listContainer.appendChild(li);
             });
         }
-    } catch (error) {
+    } catch (_error) {
         emptyState.textContent = 'Error loading notes.';
         emptyState.hidden = false;
         listContainer.hidden = true;

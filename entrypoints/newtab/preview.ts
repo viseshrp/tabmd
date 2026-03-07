@@ -6,7 +6,7 @@ import 'highlight.js/styles/github-dark.css'; // We'll let CSS overrides handle 
 marked.setOptions({
     gfm: true,
     breaks: false
-} as any);
+});
 
 const renderer = new marked.Renderer();
 // Use highlight.js
@@ -24,7 +24,7 @@ renderer.code = ({
     }
     return `<pre><code class="hljs">${highlight.highlightAuto(text).value}</code></pre>`;
 };
-marked.use({ renderer } as any);
+marked.use({ renderer });
 
 export async function renderPreview(markdownStr: string): Promise<string> {
     // Parse might be sync but defined as returning Promise|string in some typings

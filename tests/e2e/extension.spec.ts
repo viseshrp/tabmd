@@ -1,10 +1,10 @@
-import { expect, test, chromium } from '@playwright/test';
+import { chromium, expect, test } from '@playwright/test';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const extensionPath = resolve(process.cwd(), '.output', 'chrome-mv3-e2e');
 
-test('loads dashboard and options pages from the built extension', async () => {
+test('loads new tab and options pages from the built extension', async () => {
   if (!existsSync(extensionPath)) {
     throw new Error('Extension build not found. Run `pnpm build:e2e` before e2e tests.');
   }
@@ -16,15 +16,14 @@ test('loads dashboard and options pages from the built extension', async () => {
 
   const background = context.serviceWorkers()[0] ?? (await context.waitForEvent('serviceworker'));
   const extensionId = new URL(background.url()).host;
-  const dashboard = await context.newPage();
+  const newtab = await context.newPage();
   const options = await context.newPage();
 
-  await dashboard.goto(`chrome-extension://${extensionId}/tabmd.html`);
+  await newtab.goto(`chrome-extension://${extensionId}/newtab.html`);
   await options.goto(`chrome-extension://${extensionId}/options.html`);
 
-  await expect(dashboard.locator('h1')).toContainText('tabmd');
-  await expect(options.locator('h1')).toContainText('tabmd settings');
+  await expect(newtab.locator('h1')).toContainText('TabMD E2E New Tab');
+  await expect(options.locator('h1')).toContainText('TabMD E2E Settings');
 
   await context.close();
 });
-

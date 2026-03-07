@@ -44,7 +44,6 @@ export function filterNotes(notes: NoteRecord[], query: string): SearchResult[] 
                 title,
                 snippet: getBestSnippet(note.content, normQuery)
             });
-            continue;
         }
     }
 

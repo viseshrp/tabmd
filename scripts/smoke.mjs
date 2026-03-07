@@ -4,9 +4,9 @@ import { resolve } from 'node:path';
 const requiredFiles = [
   'package.json',
   'wxt.config.ts',
-  'README.md',
+  'docs/README.md',
   'entrypoints/background/index.ts',
-  'entrypoints/tabmd/index.ts',
+  'entrypoints/newtab/index.ts',
   'entrypoints/options/index.ts',
 ];
 
@@ -18,4 +18,3 @@ if (missing.length > 0) {
 }
 
 console.log('Smoke check passed.');
-

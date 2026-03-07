@@ -2,7 +2,7 @@ import { initEditor, getEditorContent, hideEditor, showEditor, toggleFocusMode }
 import { readNote, type NoteRecord } from '../shared/notes';
 import { generateUUID } from '../shared/uuid';
 import { initSaveTracking } from './save';
-import { initTitleActions, syncTitleDisplay } from './title';
+import { initTitleActions } from './title';
 import { renderPreview, showPreviewContainer, hidePreviewContainer } from './preview';
 import { performExport } from './export';
 import { readSettings } from '../shared/storage';

@@ -14,7 +14,7 @@ export default defineConfig({
     version: manifestVersion,
     name: 'TabMD',
     description: 'Markdown notes in every new tab.',
-    homepage_url: 'https://github.com/your-org/tabmd',
+    homepage_url: 'https://github.com/viseshrp/tabmd',
     permissions: ['storage', 'unlimitedStorage'],
     action: {
       default_popup: 'popup/index.html',

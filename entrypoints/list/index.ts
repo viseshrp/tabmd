@@ -87,7 +87,7 @@ function createNoteCard(result: SearchResult): HTMLElement {
     contentDiv.className = 'note-card-content';
     contentDiv.style.cursor = 'pointer';
     contentDiv.addEventListener('click', () => {
-        chrome.tabs.create({ url: chrome.runtime.getURL('newtab.html') + '#' + result.note.id });
+        chrome.tabs.create({ url: `${chrome.runtime.getURL('newtab.html')}#${result.note.id}` });
     });
 
     const titleEl = document.createElement('h3');

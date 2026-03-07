@@ -1,5 +1,4 @@
 import { resolveNoteTitle } from '../shared/note_title';
-import { getEditorContent } from './editor';
 
 export function performExport(noteTitle: string | null, content: string) {
     const resolved = resolveNoteTitle({ title: noteTitle, content });

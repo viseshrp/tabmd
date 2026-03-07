@@ -3,42 +3,56 @@ import { describe, expect, it } from 'vitest';
 import { performExport } from '../../entrypoints/newtab/export';
 
 // Mocking the DOM objects
-global.Blob = class Blob {
-    constructor(public content: any[], public options: any) { }
-} as any;
+type MockBlobPart = BlobPart;
+type MockBlobOptions = BlobPropertyBag | undefined;
+type MockAnchor = HTMLAnchorElement & { click: () => void };
+
+class MockBlob {
+    constructor(
+        public content: MockBlobPart[],
+        public options?: MockBlobOptions
+    ) {}
+}
+
+global.Blob = MockBlob as unknown as typeof Blob;
 
 global.URL = {
     createObjectURL: () => 'blob:test',
     revokeObjectURL: () => { }
-} as any;
+} as unknown as typeof URL;
 
 describe('export', () => {
     it('creates an anchor with sanitized title', () => {
         const originalCreateElement = document.createElement.bind(document);
-        let appendedChild: HTMLAnchorElement | null = null;
+        let appendedChild: MockAnchor | null = null;
         let clicked = false;
 
         document.createElement = (tag: string) => {
             const el = originalCreateElement(tag);
             if (tag === 'a') {
-                el.click = () => { clicked = true; };
+                (el as MockAnchor).click = () => { clicked = true; };
             }
             return el;
         };
 
         const originalAppend = document.body.appendChild.bind(document.body);
-        document.body.appendChild = (child: any) => {
-            appendedChild = child;
+        document.body.appendChild = <T extends Node>(child: T) => {
+            appendedChild = child as unknown as MockAnchor;
             return child;
         };
 
         const originalRemove = document.body.removeChild.bind(document.body);
-        document.body.removeChild = () => { return {} as any; };
+        document.body.removeChild = <T extends Node>(child: T) => child;
 
         performExport('Test/Title:*?', 'Content');
 
         expect(appendedChild).not.toBeNull();
-        expect((appendedChild as any).download).toBe('Test-Title---.md');
+        if (!appendedChild) {
+            throw new Error('Expected export to append an anchor element');
+        }
+
+        const anchor: HTMLAnchorElement = appendedChild;
+        expect(anchor.download).toBe('Test-Title---.md');
         expect(clicked).toBe(true);
 
         // Restore
