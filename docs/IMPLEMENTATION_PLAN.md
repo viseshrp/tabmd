@@ -473,8 +473,8 @@ This is the same Blob + anchor pattern used in the existing scaffold's `exportJs
 ### Phase 8: Background Simplification & Final Cleanup
 
 1. Simplify `entrypoints/background/index.ts` — remove action click handler (popup is now `default_popup`).
-2. Update `README.md`, `docs/architecture.md`, `docs/storage.md`.
-3. Update `TESTING.md`, `TEST_PLAN.md`.
+2. Update `docs/README.md`, `docs/architecture.md`, `docs/storage.md`.
+3. Update `docs/TESTING.md`, `docs/TEST_PLAN.md`.
 4. Update `docs/CWS_LISTING_DRAFT.md` for TabMD.
 
 ---
