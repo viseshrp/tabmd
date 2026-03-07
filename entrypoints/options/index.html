@@ -1,36 +1,61 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>tabmd settings</title>
-    <link rel="stylesheet" href="../shared/theme.css" />
-  </head>
-  <body>
-    <main class="app">
-      <header>
-        <h1>tabmd settings</h1>
-        <p class="subtitle">Generic preferences for the starter scaffold.</p>
-      </header>
-      <section class="settings">
-        <label class="setting">
-          <input id="openInNewTab" type="checkbox" />
-          <span>Open starter resources in a new tab</span>
-        </label>
-        <label class="setting">
-          <input id="compactCards" type="checkbox" />
-          <span>Use compact cards for content lists</span>
-        </label>
-        <section class="setting-group">
-          <div class="setting-label">Theme</div>
-          <p class="setting-help">Choose how the extension pages handle light and dark appearance.</p>
-          <label class="setting-radio"><input id="themeOs" type="radio" name="theme" value="os" /><span>Use system</span></label>
-          <label class="setting-radio"><input id="themeLight" type="radio" name="theme" value="light" /><span>Light</span></label>
-          <label class="setting-radio"><input id="themeDark" type="radio" name="theme" value="dark" /><span>Dark</span></label>
-        </section>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TabMD Settings</title>
+  <!-- We purposefully link to the shared design tokens to maintain a unified look & feel. -->
+  <link rel="stylesheet" href="../shared/theme.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div class="settings-container">
+    <header class="settings-header">
+      <h1 class="settings-title">TabMD Settings</h1>
+    </header>
+
+    <main class="settings-content">
+      <!-- Settings Panel: Theme Preference -->
+      <section class="settings-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">Appearance</h2>
+        </div>
+        <div class="panel-body">
+          <!-- Setting block starts -->
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-name">Theme</div>
+              <div class="setting-desc">Choose how TabMD's interface looks.</div>
+            </div>
+            <div class="setting-control radio-group theme-toggle" id="theme-controls">
+              <label class="radio-label">
+                <input type="radio" name="theme" value="os" checked />
+                <span class="radio-pill">System</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="theme" value="light" />
+                <span class="radio-pill">Light</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="theme" value="dark" />
+                <span class="radio-pill">Dark</span>
+              </label>
+            </div>
+          </div>
+          <!-- Setting block ends -->
+        </div>
       </section>
-      <div id="snackbar" class="snackbar" role="status" aria-live="polite"></div>
+
     </main>
-    <script type="module" src="./index.ts"></script>
-  </body>
+  </div>
+
+  <!-- We inject the snackbar container here, reusing the same element class and semantics -->
+  <div id="snackbar" class="snackbar" hidden></div>
+
+  <!-- Entrypoint script injected automatically by WXT -->
+  <script type="module" src="index.ts"></script>
+</body>
+
 </html>

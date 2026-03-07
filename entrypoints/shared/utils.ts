@@ -1,4 +1,4 @@
-export type ExtensionErrorOperation = 'runtime_context' | 'storage' | 'tab_query';
+export type ExtensionErrorOperation = 'runtime_context' | 'storage' | 'tab_query' | 'save_logic' | 'list_load' | 'list_rename' | 'list_delete' | 'options_page';
 
 export function logExtensionError(
   message: string,

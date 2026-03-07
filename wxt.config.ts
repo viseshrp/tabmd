@@ -12,12 +12,13 @@ export default defineConfig({
   }),
   manifest: {
     version: manifestVersion,
-    name: 'tabmd',
-    description: 'Material-style WXT extension skeleton.',
+    name: 'TabMD',
+    description: 'Markdown notes in every new tab.',
     homepage_url: 'https://github.com/your-org/tabmd',
-    permissions: ['tabs', 'storage'],
+    permissions: ['storage', 'unlimitedStorage'],
     action: {
-      default_title: 'Open tabmd',
+      default_popup: 'popup/index.html',
+      default_title: 'TabMD',
       default_icon: {
         16: 'icon/16.png',
         19: 'icon/19.png',

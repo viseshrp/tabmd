@@ -35,6 +35,10 @@
     "vitest": "^2.1.4",
     "web-ext": "^9.2.0",
     "wxt": "^0.20.6"
+  },
+  "dependencies": {
+    "easymde": "^2.20.0",
+    "highlight.js": "^11.11.1",
+    "marked": "^17.0.4"
   }
 }
-

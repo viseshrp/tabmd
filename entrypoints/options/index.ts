@@ -2,7 +2,6 @@ import './style.css';
 import { initSettingsPage } from './settings_page';
 import { logExtensionError } from '../shared/utils';
 
-void initSettingsPage().catch((error) => {
+void initSettingsPage().catch((error: unknown) => {
   logExtensionError('Failed to initialize settings page', error, { operation: 'runtime_context' });
 });
-

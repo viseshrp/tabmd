@@ -1,34 +1,65 @@
 import { createSnackbarNotifier } from '../ui/notifications';
-import { readSettings, writeSettings, type ThemeMode } from '../shared/storage';
+import { readSettings, writeSettings, type TabmdSettings, type ThemeMode } from '../shared/storage';
+import { logExtensionError } from '../shared/utils';
 
-export async function initSettingsPage(): Promise<void> {
-  const snackbar = createSnackbarNotifier(document.querySelector('#snackbar'));
-  const settings = await readSettings();
+let notify: ReturnType<typeof createSnackbarNotifier>;
+let currentSettings: TabmdSettings;
 
-  const openInNewTabEl = document.querySelector<HTMLInputElement>('#openInNewTab');
-  const compactCardsEl = document.querySelector<HTMLInputElement>('#compactCards');
-  const themeEls = Array.from(document.querySelectorAll<HTMLInputElement>('input[name="theme"]'));
-
-  if (!openInNewTabEl || !compactCardsEl || themeEls.length === 0) return;
-
-  const openInNewTab = openInNewTabEl;
-  const compactCards = compactCardsEl;
-
-  openInNewTab.checked = settings.openInNewTab;
-  compactCards.checked = settings.compactCards;
-  for (const input of themeEls) input.checked = input.value === settings.theme;
-
-  async function persist(): Promise<void> {
-    const selectedTheme = (themeEls.find((input) => input.checked)?.value ?? 'os') as ThemeMode;
-    await writeSettings({
-      openInNewTab: openInNewTab.checked,
-      compactCards: compactCards.checked,
-      theme: selectedTheme
-    });
-    snackbar.notify('Settings saved.');
+function applyThemeToPage(theme: ThemeMode) {
+  if (theme === 'os') {
+    document.documentElement.removeAttribute('data-theme');
+  } else {
+    document.documentElement.setAttribute('data-theme', theme);
   }
+}
 
-  openInNewTab.addEventListener('change', () => void persist());
-  compactCards.addEventListener('change', () => void persist());
-  for (const input of themeEls) input.addEventListener('change', () => void persist());
+async function saveCurrentSettings(newSettingsContent: Partial<TabmdSettings>) {
+  try {
+    const updated = { ...currentSettings, ...newSettingsContent };
+
+    await writeSettings(updated);
+    currentSettings = updated;
+
+    // Immediately apply theme visual
+    applyThemeToPage(currentSettings.theme);
+
+    if (notify) {
+      notify.notify('Settings saved');
+    }
+  } catch (err: unknown) {
+    logExtensionError('Failed to save settings', err, 'options_page');
+  }
+}
+
+function initThemeControls() {
+  const themeRadios = Array.from(document.querySelectorAll<HTMLInputElement>('input[name="theme"]'));
+
+  for (const radio of themeRadios) {
+    if (radio.value === currentSettings.theme) {
+      radio.checked = true;
+    }
+
+    radio.addEventListener('change', () => {
+      if (radio.checked) {
+        void saveCurrentSettings({ theme: radio.value as ThemeMode });
+      }
+    });
+  }
+}
+
+export async function initSettingsPage() {
+  try {
+    currentSettings = await readSettings();
+    applyThemeToPage(currentSettings.theme);
+
+    initThemeControls();
+
+    // Setting up our notification system
+    const snackbarEl = document.getElementById('snackbar');
+    if (snackbarEl) {
+      notify = createSnackbarNotifier(snackbarEl);
+    }
+  } catch (err: unknown) {
+    logExtensionError('Failed to initialize options page', err, 'options_page');
+  }
 }
