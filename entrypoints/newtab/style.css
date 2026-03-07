@@ -165,9 +165,62 @@ body {
   transform: translateY(-1px);
 }
 
+.action-btn.active,
+.action-btn[aria-pressed='true'] {
+  background: rgba(var(--md-sys-color-outline-rgb), 0.16);
+  border-color: rgba(var(--md-sys-color-outline-rgb), 0.34);
+}
+
 .main-content {
   min-height: 0;
   overflow: hidden;
+}
+
+/* Focus mode leaves only the exit control on screen so the editor can own the workspace. */
+body.focus-mode-active .page-shell {
+  padding: 0;
+  gap: 0;
+}
+
+body.focus-mode-active .app-header {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 20;
+}
+
+body.focus-mode-active .header-top {
+  display: block;
+}
+
+body.focus-mode-active .title-panel,
+body.focus-mode-active .tab-bar,
+body.focus-mode-active #btn-export,
+body.focus-mode-active #btn-options {
+  display: none;
+}
+
+body.focus-mode-active .header-actions {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+body.focus-mode-active .action-row {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+body.focus-mode-active .action-btn {
+  background: var(--md-sys-color-surface);
+  box-shadow: var(--md-sys-elevation-2);
+}
+
+body.focus-mode-active .main-content {
+  position: fixed;
+  inset: 0;
+  border: 0;
+  border-radius: 0;
 }
 
 .editor-frame {
@@ -198,6 +251,10 @@ body {
   line-height: 1.7;
   padding: 26px 30px;
   font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+body.focus-mode-active .EasyMDEContainer .CodeMirror {
+  padding-top: 88px;
 }
 
 .EasyMDEContainer .CodeMirror-scroll {

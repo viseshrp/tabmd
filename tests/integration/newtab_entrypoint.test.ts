@@ -7,6 +7,7 @@ const initEditor = vi.fn();
 const getEditorContent = vi.fn(() => "Editor body");
 const hideEditor = vi.fn();
 const showEditor = vi.fn();
+const setFocusMode = vi.fn();
 const toggleFocusMode = vi.fn();
 const initSaveTracking = vi.fn();
 const initTitleActions = vi.fn();
@@ -23,6 +24,7 @@ vi.mock("../../entrypoints/newtab/editor", () => ({
 	getEditorContent,
 	hideEditor,
 	showEditor,
+	setFocusMode,
 	toggleFocusMode,
 }));
 
@@ -64,6 +66,7 @@ describe("newtab entrypoint", () => {
 		getEditorContent.mockReturnValue("Editor body");
 		hideEditor.mockReset();
 		showEditor.mockReset();
+		setFocusMode.mockReset();
 		toggleFocusMode.mockReset();
 		initSaveTracking.mockReset();
 		initTitleActions.mockReset();
@@ -117,20 +120,23 @@ describe("newtab entrypoint", () => {
 			.getElementById("tab-preview")
 			?.dispatchEvent(new MouseEvent("click"));
 		await flushMicrotasks();
+		expect(setFocusMode).toHaveBeenCalledWith(false);
 		expect(hideEditor).toHaveBeenCalled();
 		expect(renderPreview).toHaveBeenCalledWith("Editor body");
 		expect(showPreviewContainer).toHaveBeenCalledWith("<p>preview</p>");
+
+		document
+			.getElementById("btn-focus")
+			?.dispatchEvent(new MouseEvent("click"));
+		expect(hidePreviewContainer).toHaveBeenCalled();
+		expect(showEditor).toHaveBeenCalled();
+		expect(toggleFocusMode).toHaveBeenCalled();
 
 		document
 			.getElementById("tab-editor")
 			?.dispatchEvent(new MouseEvent("click"));
 		expect(hidePreviewContainer).toHaveBeenCalled();
 		expect(showEditor).toHaveBeenCalled();
-
-		document
-			.getElementById("btn-focus")
-			?.dispatchEvent(new MouseEvent("click"));
-		expect(toggleFocusMode).toHaveBeenCalled();
 
 		document
 			.getElementById("btn-export")
