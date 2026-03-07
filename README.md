@@ -85,7 +85,7 @@ Path: `entrypoints/popup/`
 Responsibilities:
 
 - Load all notes on popup open
-- Sort by `modifiedAt` descending
+- Select the 20 most recent notes without fully sorting the complete collection
 - Render the 20 most recent notes
 - Open the selected note in a new tab
 - Navigate to the full list page or options page
@@ -97,7 +97,7 @@ Path: `entrypoints/list/`
 Responsibilities:
 
 - Load and sort all notes
-- Search across derived titles and note content
+- Search across derived titles and note content using cached normalized metadata per page load
 - Show a snippet for each matching note
 - Rename notes
 - Delete notes
@@ -131,7 +131,7 @@ entrypoints/
   shared/       storage, note, title, and utility helpers
   ui/           shared UI helpers
 tests/
-  helpers/      Chrome API mocks
+  helpers/      Chrome API mocks and async test helpers
   integration/  entrypoint bootstrapping checks
   unit/         pure logic and storage tests
 docs/
@@ -190,6 +190,7 @@ pnpm zip
 ```bash
 pnpm compile
 pnpm lint
+pnpm smoke
 pnpm test
 ```
 

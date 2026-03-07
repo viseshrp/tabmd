@@ -11,12 +11,17 @@ pnpm test
 
 1. Place pure logic tests inside `tests/unit/`.
 2. Place integration-level page renderings in `tests/integration/`.
-3. Separate mocked storage injections using `tests/helpers/mock_chrome.ts`.
+3. Keep shared test-only utilities under `tests/helpers/` so production code stays free of test scaffolding.
+4. Prefer `tests/helpers/flush.ts` for async entrypoint settling instead of `setTimeout(..., 0)` waits.
 
 ### CI Process
 Every pull request on GitHub will automatically trigger the `ci.yml` matrix which invokes:
 - `pnpm install`
-- `pnpm wxt prepare`
+- `pnpm lint:webext`
+- `pnpm quality`
+- `pnpm smoke`
+- `pnpm exec playwright install --with-deps chromium`
+- `pnpm test:e2e`
 - `pnpm test`
 
 These ensure nothing gets merged without fully satisfying our storage and markdown requirements.
