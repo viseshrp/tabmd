@@ -1,105 +1,188 @@
 body {
-    margin: 0;
-    padding: 0;
-    width: 320px;
-    max-height: 480px;
-    display: flex;
-    flex-direction: column;
-    background-color: var(--md-sys-color-background);
-    color: var(--md-sys-color-on-background);
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  width: 360px;
+  max-height: 560px;
+  padding: 16px;
+  box-sizing: border-box;
+  background:
+    radial-gradient(circle at top left, rgba(var(--md-sys-color-outline-rgb), 0.09), transparent 32%),
+    linear-gradient(180deg, var(--md-sys-color-background) 0%, var(--md-sys-color-surface) 100%);
+}
+
+/* The popup uses stacked cards so the compact surface still feels organized instead of cramped. */
+.popup-shell {
+  display: grid;
+  gap: 12px;
+}
+
+.popup-header,
+.popup-main,
+.popup-footer {
+  border: 1px solid rgba(var(--md-sys-color-outline-rgb), 0.2);
 }
 
 .popup-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 16px;
-    background-color: var(--md-sys-color-surface);
-    border-bottom: 1px solid var(--md-sys-color-outline-variant);
-    flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 12px;
+  padding: 16px;
+}
+
+.popup-header-copy {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--md-sys-color-primary);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .popup-title {
-    margin: 0;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--md-sys-color-on-surface);
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.1;
+  color: var(--md-sys-color-on-surface);
+}
+
+.popup-subtitle {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .icon-btn {
-    background: transparent;
-    border: none;
-    padding: 6px;
-    border-radius: 50%;
-    color: var(--md-sys-color-on-surface-variant);
-    cursor: pointer;
-    display: flex;
+  flex-shrink: 0;
+  background: rgba(var(--md-sys-color-outline-rgb), 0.08);
+  border: 1px solid rgba(var(--md-sys-color-outline-rgb), 0.18);
+  padding: 8px;
+  border-radius: 999px;
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+  display: flex;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .icon-btn:hover {
-    background-color: var(--md-sys-color-surface-variant);
-    color: var(--md-sys-color-on-surface);
+  background-color: rgba(var(--md-sys-color-outline-rgb), 0.14);
+  border-color: rgba(var(--md-sys-color-outline-rgb), 0.28);
+  color: var(--md-sys-color-on-surface);
+  transform: translateY(-1px);
 }
 
 .popup-main {
-    flex: 1;
-    overflow-y: auto;
-    min-height: 100px;
+  min-height: 180px;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.popup-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid rgba(var(--md-sys-color-outline-rgb), 0.14);
+}
+
+.section-label {
+  color: var(--md-sys-color-on-surface);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.section-detail {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 12px;
 }
 
 .note-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
+  list-style: none;
+  margin: 0;
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+  overflow-y: auto;
 }
 
 .note-item {
-    border-bottom: 1px solid var(--md-sys-color-surface-variant);
+  border-radius: var(--md-sys-shape-corner-medium);
 }
 
+/* Each note is presented as a lightweight card so the same visual language carries into the compact popup. */
 .note-link {
-    display: block;
-    padding: 12px 16px;
-    color: var(--md-sys-color-on-surface);
-    text-decoration: none;
-    font-size: 14px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    transition: background-color 0.2s;
+  display: block;
+  padding: 12px 14px;
+  border: 1px solid rgba(var(--md-sys-color-outline-rgb), 0.18);
+  border-radius: inherit;
+  background: rgba(var(--md-sys-color-outline-rgb), 0.06);
+  color: var(--md-sys-color-on-surface);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .note-link:hover {
-    background-color: var(--md-sys-color-surface-variant);
+  background-color: rgba(var(--md-sys-color-outline-rgb), 0.11);
+  border-color: rgba(var(--md-sys-color-outline-rgb), 0.3);
+  transform: translateY(-1px);
 }
 
 .empty-state {
-    padding: 24px;
-    text-align: center;
-    color: var(--md-sys-color-on-surface-variant);
-    font-size: 13px;
+  align-self: center;
+  padding: 24px;
+  text-align: center;
+}
+
+.empty-title {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--md-sys-color-on-surface);
+  font-size: 16px;
+}
+
+.empty-copy {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .popup-footer {
-    padding: 8px 16px;
-    border-top: 1px solid var(--md-sys-color-outline-variant);
-    background-color: var(--md-sys-color-surface);
-    text-align: center;
-    flex-shrink: 0;
+  padding: 8px;
 }
 
 .text-btn {
-    background: transparent;
-    border: none;
-    color: var(--md-sys-color-primary);
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    padding: 8px;
-    width: 100%;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-medium);
+  color: var(--md-sys-color-primary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 10px 12px;
+  transition: background-color 0.2s ease;
 }
 
 .text-btn:hover {
-    text-decoration: underline;
+  background: rgba(var(--md-sys-color-outline-rgb), 0.08);
 }

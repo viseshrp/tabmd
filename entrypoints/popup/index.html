@@ -10,31 +10,42 @@
 </head>
 
 <body>
-    <header class="popup-header">
-        <h1 class="popup-title">Recent Notes</h1>
-        <button id="btn-options" class="icon-btn" title="Settings" aria-label="Settings">
-            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"
-                stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path
-                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
-                </path>
-            </svg>
-        </button>
-    </header>
+    <div class="popup-shell">
+        <header class="popup-header surface-card">
+            <div class="popup-header-copy">
+                <p class="eyebrow">Quick Access</p>
+                <h1 class="popup-title">Recent Notes</h1>
+                <p class="popup-subtitle">Jump back into your latest drafts or open the full library.</p>
+            </div>
+            <button id="btn-options" class="icon-btn" title="Settings" aria-label="Settings">
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                    </path>
+                </svg>
+            </button>
+        </header>
 
-    <main class="popup-main">
-        <ul id="note-list" class="note-list">
-            <!-- Rendered items go here -->
-        </ul>
-        <div id="empty-state" class="empty-state" hidden>
-            No notes yet.
-        </div>
-    </main>
+        <main class="popup-main surface-card">
+            <div class="popup-section-header">
+                <span class="section-label">Latest 20</span>
+                <span class="section-detail">Sorted by most recently updated.</span>
+            </div>
+            <ul id="note-list" class="note-list">
+                <!-- Rendered items go here -->
+            </ul>
+            <div id="empty-state" class="empty-state" hidden>
+                <strong class="empty-title">No notes yet</strong>
+                <p class="empty-copy">Open a new tab to start your first draft.</p>
+            </div>
+        </main>
 
-    <footer class="popup-footer">
-        <button id="btn-more" class="text-btn">Manage all notes</button>
-    </footer>
+        <footer class="popup-footer surface-card">
+            <button id="btn-more" class="text-btn">Manage all notes</button>
+        </footer>
+    </div>
 
     <script type="module" src="index.ts"></script>
 </body>

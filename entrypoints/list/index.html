@@ -12,9 +12,13 @@
 <body>
     <header class="list-header">
         <div class="header-content">
-            <h1 class="page-title">Notes <span id="note-count" class="badge">0</span></h1>
+            <div class="header-copy">
+                <p class="eyebrow">Library</p>
+                <h1 class="page-title">Notes <span id="note-count" class="badge">0</span></h1>
+                <p class="page-subtitle">Browse, search, and maintain every note saved by TabMD.</p>
+            </div>
 
-            <div class="header-actions">
+            <div class="header-actions surface-card">
                 <div class="search-container">
                     <svg class="search-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor"
                         stroke-width="2" fill="none">
@@ -24,40 +28,51 @@
                     <input type="text" id="search-input" class="search-input" placeholder="Search notes..." />
                 </div>
 
-                <button id="btn-new-note" class="primary-btn">
-                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                    </svg>
-                    New Note
-                </button>
+                <div class="toolbar-actions">
+                    <button id="btn-new-note" class="primary-btn">
+                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        New Note
+                    </button>
 
-                <button id="btn-options" class="icon-btn" title="Settings">
-                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
-                        <circle cx="12" cy="12" r="3"></circle>
-                        <path
-                            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
-                        </path>
-                    </svg>
-                </button>
+                    <button id="btn-options" class="icon-btn" title="Settings" aria-label="Settings">
+                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path
+                                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
             </div>
         </div>
     </header>
 
     <main class="list-main">
-        <div id="notes-grid" class="notes-grid">
-            <!-- Rendered cards go here -->
-        </div>
+        <div class="content-shell">
+            <div class="section-header surface-card">
+                <span class="section-title">All Notes</span>
+                <span class="section-detail">Results update instantly as you type.</span>
+            </div>
 
-        <div id="empty-state" class="empty-state" hidden>
-            <p>No notes yet. Open a new tab to start writing.</p>
-        </div>
+            <div id="notes-grid" class="notes-grid">
+                <!-- Rendered cards go here -->
+            </div>
 
-        <div id="no-results" class="empty-state" hidden>
-            <p>No results.</p>
-        </div>
+            <div id="empty-state" class="empty-state surface-card" hidden>
+                <strong class="empty-title">No notes yet</strong>
+                <p class="empty-copy">Open a new tab to start writing and your saved notes will appear here.</p>
+            </div>
 
-        <div id="snackbar" class="snackbar" hidden></div>
+            <div id="no-results" class="empty-state surface-card" hidden>
+                <strong class="empty-title">No matching notes</strong>
+                <p class="empty-copy">Try a different keyword or clear the search field to see everything again.</p>
+            </div>
+
+            <div id="snackbar" class="snackbar" hidden></div>
+        </div>
     </main>
 
     <script type="module" src="index.ts"></script>
