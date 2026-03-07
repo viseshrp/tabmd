@@ -7,6 +7,8 @@ type StorageListener = (
 ) => void;
 
 export type MockChrome = {
+  __storageData: StorageRecord;
+  __createdTabs: chrome.tabs.CreateProperties[];
   runtime: {
     getURL: (path: string) => string;
   };
@@ -55,8 +57,11 @@ export function createMockChrome(options?: { initialStorage?: StorageRecord }): 
   const storageData: StorageRecord = { ...(options?.initialStorage ?? {}) };
   const actionListeners: Array<(...args: unknown[]) => void> = [];
   const storageListeners = new Set<StorageListener>();
+  const createdTabs: chrome.tabs.CreateProperties[] = [];
 
   return {
+    __storageData: storageData,
+    __createdTabs: createdTabs,
     runtime: {
       getURL: (path: string) => `chrome-extension://mock/${path}`,
     },
@@ -109,6 +114,7 @@ export function createMockChrome(options?: { initialStorage?: StorageRecord }): 
         return { id: tabId, windowId: 1, ...updateProperties } as chrome.tabs.Tab;
       },
       async create(createProperties: chrome.tabs.CreateProperties) {
+        createdTabs.push(createProperties);
         return { id: 1, windowId: 1, url: createProperties.url } as chrome.tabs.Tab;
       },
     },
