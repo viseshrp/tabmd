@@ -3,78 +3,226 @@
 }
 
 body {
-  margin: 0;
-  padding: 24px;
-  background: var(--md-sys-color-background);
-  color: var(--md-sys-color-on-background);
-  font-family: var(--md-sys-typescale-body-font);
+  min-height: 100vh;
   display: flex;
   justify-content: center;
-  min-height: 100vh;
+  padding: 40px 24px;
+  background:
+    radial-gradient(circle at top left, rgba(var(--md-sys-color-outline-rgb), 0.08), transparent 28%),
+    linear-gradient(180deg, var(--md-sys-color-background) 0%, var(--md-sys-color-surface) 100%);
+  color: var(--md-sys-color-on-background);
 }
 
-.app {
-  width: 100%;
-  max-width: 680px;
-  background: var(--md-sys-color-surface);
-  padding: 32px;
-  border-radius: var(--md-sys-shape-corner-large);
-  box-shadow: var(--md-sys-elevation-1);
-  height: fit-content;
+/* The outer shell constrains line length and creates clear vertical rhythm without affecting other pages. */
+.settings-container {
+  width: min(100%, 880px);
+  display: grid;
+  gap: 32px;
 }
 
-header {
-  margin-bottom: 32px;
-  text-align: center;
-}
-
-h1 {
-  margin: 0 0 8px;
-  font-size: 28px;
-  font-weight: 400;
-}
-
-.subtitle {
-  margin: 0;
-  color: var(--md-sys-color-on-surface-variant);
-}
-
-.settings {
-  display: flex;
-  flex-direction: column;
+/* The header uses a two-column layout on wide screens so the introduction and summary feel intentionally grouped. */
+.settings-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
   gap: 24px;
+  align-items: start;
 }
 
-.setting {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+.header-copy {
+  display: grid;
+  gap: 12px;
 }
 
-.setting-group {
-  margin-top: 8px;
-  padding: 20px;
-  border-radius: var(--md-sys-shape-corner-medium);
-  border: 1px solid rgba(var(--md-sys-color-outline-rgb), 0.4);
+.eyebrow {
+  margin: 0;
+  color: var(--md-sys-color-primary);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-.setting-label {
-  font-weight: 500;
-  margin-bottom: 8px;
+.settings-title {
+  margin: 0;
+  font-size: clamp(32px, 4vw, 40px);
+  line-height: 1.05;
+  color: var(--md-sys-color-on-background);
 }
 
-.setting-help {
-  margin: 0 0 16px;
+.settings-intro {
+  margin: 0;
+  max-width: 60ch;
   color: var(--md-sys-color-on-surface-variant);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.header-summary {
+  display: grid;
+  gap: 8px;
+  padding: 20px;
+  border: 1px solid rgba(var(--md-sys-color-outline-rgb), 0.2);
+  align-self: stretch;
+}
+
+.summary-label {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 13px;
+}
+
+.summary-value {
+  color: var(--md-sys-color-on-surface);
+  font-size: 20px;
+}
+
+.summary-detail {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 14px;
   line-height: 1.5;
 }
 
-.setting-radio {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 0;
+.settings-content {
+  display: grid;
+}
+
+/* Each panel is a self-contained settings section with explicit spacing for the header and body content. */
+.settings-panel {
+  border: 1px solid rgba(var(--md-sys-color-outline-rgb), 0.22);
+  overflow: hidden;
+}
+
+.panel-header {
+  display: grid;
+  gap: 8px;
+  padding: 28px 28px 20px;
+  border-bottom: 1px solid rgba(var(--md-sys-color-outline-rgb), 0.16);
+}
+
+.panel-title {
+  margin: 0;
+  font-size: 22px;
+  color: var(--md-sys-color-on-surface);
+}
+
+.panel-description {
+  margin: 0;
+  max-width: 56ch;
+  color: var(--md-sys-color-on-surface-variant);
+  line-height: 1.6;
+}
+
+.panel-body {
+  padding: 28px;
+}
+
+.setting-item {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.setting-info {
+  display: grid;
+  gap: 10px;
+}
+
+.setting-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+
+.setting-desc {
+  color: var(--md-sys-color-on-surface-variant);
+  line-height: 1.6;
+}
+
+.radio-group {
+  min-width: 0;
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+/* The label wraps the native input and descriptive copy so the whole card stays clickable and accessible. */
+.theme-option {
+  display: block;
   cursor: pointer;
+}
+
+.theme-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.theme-option-content {
+  display: grid;
+  gap: 8px;
+  padding: 16px 18px;
+  border: 1px solid rgba(var(--md-sys-color-outline-rgb), 0.25);
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: rgba(var(--md-sys-color-outline-rgb), 0.06);
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.theme-option:hover .theme-option-content,
+.theme-option input:focus-visible + .theme-option-content {
+  border-color: rgba(var(--md-sys-color-outline-rgb), 0.45);
+  background: rgba(var(--md-sys-color-outline-rgb), 0.1);
+}
+
+.theme-option input:checked + .theme-option-content {
+  border-color: var(--md-sys-color-primary);
+  background: var(--md-sys-color-primary-container);
+  box-shadow: 0 0 0 1px rgba(var(--md-sys-color-outline-rgb), 0.06);
+  transform: translateY(-1px);
+}
+
+.radio-pill {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(var(--md-sys-color-outline-rgb), 0.14);
+  color: var(--md-sys-color-on-surface);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.theme-option input:checked + .theme-option-content .radio-pill {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+
+.theme-option-desc {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.theme-option input:checked + .theme-option-content .theme-option-desc {
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .snackbar {
@@ -96,4 +244,20 @@ h1 {
 .snackbar.show {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
+}
+
+@media (max-width: 760px) {
+  body {
+    padding: 24px 16px 40px;
+  }
+
+  .settings-header,
+  .setting-item {
+    grid-template-columns: 1fr;
+  }
+
+  .panel-header,
+  .panel-body {
+    padding: 24px 20px;
+  }
 }

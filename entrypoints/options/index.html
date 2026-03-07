@@ -13,41 +13,63 @@
 <body>
   <div class="settings-container">
     <header class="settings-header">
-      <h1 class="settings-title">TabMD Settings</h1>
+      <div class="header-copy">
+        <p class="eyebrow">Preferences</p>
+        <h1 class="settings-title">TabMD Settings</h1>
+        <p class="settings-intro">
+          Control how TabMD looks across the new tab, popup, list, and settings pages.
+        </p>
+      </div>
+      <div class="header-summary surface-card" aria-hidden="true">
+        <span class="summary-label">Available now</span>
+        <strong class="summary-value">Appearance</strong>
+        <span class="summary-detail">Theme changes apply immediately everywhere.</span>
+      </div>
     </header>
 
     <main class="settings-content">
-      <!-- Settings Panel: Theme Preference -->
-      <section class="settings-panel">
+      <!-- Appearance stays isolated in its own panel so future settings can add siblings without changing this flow. -->
+      <section class="settings-panel surface-card" aria-labelledby="appearance-title">
         <div class="panel-header">
           <h2 class="panel-title">Appearance</h2>
+          <p class="panel-description">Choose the theme mode that should drive the entire extension UI.</p>
         </div>
         <div class="panel-body">
-          <!-- Setting block starts -->
-          <div class="setting-item">
+          <!-- The setting row keeps the label, help text, and controls visually grouped for quick scanning. -->
+          <div class="setting-item" role="group" aria-labelledby="theme-setting-name" aria-describedby="theme-setting-desc">
             <div class="setting-info">
-              <div class="setting-name">Theme</div>
-              <div class="setting-desc">Choose how TabMD's interface looks.</div>
+              <div class="setting-name" id="theme-setting-name">Theme</div>
+              <div class="setting-desc" id="theme-setting-desc">
+                Pick whether TabMD follows your device theme or stays fixed to a light or dark interface.
+              </div>
             </div>
-            <div class="setting-control radio-group theme-toggle" id="theme-controls">
-              <label class="radio-label">
+            <fieldset class="setting-control radio-group theme-toggle" id="theme-controls">
+              <legend class="sr-only">Theme preference</legend>
+              <label class="radio-label theme-option">
                 <input type="radio" name="theme" value="os" checked />
-                <span class="radio-pill">System</span>
+                <span class="theme-option-content">
+                  <span class="radio-pill">System</span>
+                  <span class="theme-option-desc">Match your operating system preference automatically.</span>
+                </span>
               </label>
-              <label class="radio-label">
+              <label class="radio-label theme-option">
                 <input type="radio" name="theme" value="light" />
-                <span class="radio-pill">Light</span>
+                <span class="theme-option-content">
+                  <span class="radio-pill">Light</span>
+                  <span class="theme-option-desc">Keep the interface bright in every supported surface.</span>
+                </span>
               </label>
-              <label class="radio-label">
+              <label class="radio-label theme-option">
                 <input type="radio" name="theme" value="dark" />
-                <span class="radio-pill">Dark</span>
+                <span class="theme-option-content">
+                  <span class="radio-pill">Dark</span>
+                  <span class="theme-option-desc">Use a darker workspace that reduces glare on darker displays.</span>
+                </span>
               </label>
-            </div>
+            </fieldset>
           </div>
-          <!-- Setting block ends -->
         </div>
       </section>
-
     </main>
   </div>
 
