@@ -8,60 +8,45 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <div class="page-shell">
-      <header class="app-header">
-        <div class="header-top">
-          <div class="title-panel surface-card">
-            <p class="eyebrow">Workspace</p>
-            <div class="title-container">
-              <h1 id="note-title-display" class="title-display">Untitled</h1>
-              <input type="text" id="note-title-input" class="title-input" placeholder="Title" hidden />
-            </div>
-            <p class="title-help">Use the first line or a custom title to keep your notes easy to find later.</p>
-          </div>
+    <header class="app-header">
+      <div class="title-container">
+        <h1 id="note-title-display" class="title-display">Untitled</h1>
+        <input type="text" id="note-title-input" class="title-input" placeholder="Title" hidden />
+      </div>
 
-          <div class="header-actions surface-card">
-            <div class="tab-bar" role="tablist" aria-label="View mode">
-              <button id="tab-editor" class="tab-btn active">Editor</button>
-              <button id="tab-preview" class="tab-btn">Preview</button>
-            </div>
+      <div class="tab-bar">
+        <button id="tab-editor" class="tab-btn active">Editor</button>
+        <button id="tab-preview" class="tab-btn">Preview</button>
+      </div>
 
-            <div class="action-row">
-              <button id="btn-focus" class="action-btn" title="Focus Mode" aria-label="Toggle Focus Mode">
-                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
-                </svg>
-                <span>Focus</span>
-              </button>
-              <button id="btn-export" class="action-btn" title="Export as Markdown" aria-label="Export Markdown">
-                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path>
-                </svg>
-                <span>Export</span>
-              </button>
-              <button id="btn-options" class="action-btn" title="Settings" aria-label="Settings">
-                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="3"></circle>
-                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                </svg>
-                <span>Settings</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <div class="header-actions">
+        <button id="btn-focus" class="action-btn" title="Focus Mode" aria-label="Toggle Focus Mode">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+          </svg>
+        </button>
+        <button id="btn-export" class="action-btn" title="Export as Markdown" aria-label="Export Markdown">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path>
+          </svg>
+        </button>
+        <button id="btn-options" class="action-btn" title="Settings" aria-label="Settings">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
 
-      <main class="main-content surface-card">
-        <div class="editor-frame">
-          <div id="editor-container" class="view-container">
-            <textarea id="editor-textarea"></textarea>
-          </div>
-          <div id="preview-container" class="view-container markdown-body" hidden>
-            <!-- Rendered HTML is inserted here -->
-          </div>
-        </div>
-      </main>
-    </div>
+    <main class="main-content">
+      <div id="editor-container" class="view-container">
+        <textarea id="editor-textarea"></textarea>
+      </div>
+      <div id="preview-container" class="view-container markdown-body" hidden>
+        <!-- Rendered HTML is inserted here -->
+      </div>
+    </main>
 
     <script type="module" src="index.ts"></script>
   </body>
