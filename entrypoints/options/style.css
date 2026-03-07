@@ -83,6 +83,7 @@ body {
 
 .settings-content {
   display: grid;
+  gap: 24px;
 }
 
 /* Each panel is a self-contained settings section with explicit spacing for the header and body content. */
@@ -213,6 +214,147 @@ body {
   color: var(--md-sys-color-on-primary-container);
 }
 
+.drive-backup-body {
+  display: grid;
+  gap: 24px;
+}
+
+.drive-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.drive-retention {
+  display: grid;
+  gap: 10px;
+  max-width: 280px;
+}
+
+.drive-retention input,
+.drive-page-size select {
+  padding: 12px 14px;
+  border: 1px solid rgba(var(--md-sys-color-outline-rgb), 0.24);
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: rgba(var(--md-sys-color-outline-rgb), 0.04);
+  color: var(--md-sys-color-on-surface);
+  font: inherit;
+}
+
+.drive-status {
+  min-height: 20px;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.drive-restore-dialog {
+  width: min(100% - 32px, 920px);
+  border: 1px solid rgba(var(--md-sys-color-outline-rgb), 0.2);
+  border-radius: 28px;
+  padding: 0;
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  box-shadow: var(--md-sys-elevation-3);
+}
+
+.drive-restore-dialog::backdrop {
+  background: rgba(var(--md-sys-color-shadow-rgb), 0.26);
+  backdrop-filter: blur(4px);
+}
+
+.drive-restore-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 24px 0;
+}
+
+.drive-restore-header h3 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.drive-restore-close {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  padding: 0;
+  font-size: 24px;
+}
+
+.drive-restore-copy {
+  margin: 0;
+  padding: 12px 24px 0;
+  color: var(--md-sys-color-on-surface-variant);
+  line-height: 1.6;
+}
+
+.drive-list-wrap {
+  padding: 24px;
+  overflow-x: auto;
+}
+
+.drive-list-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 540px;
+}
+
+.drive-list-table th,
+.drive-list-table td {
+  padding: 14px 12px;
+  border-bottom: 1px solid rgba(var(--md-sys-color-outline-rgb), 0.14);
+  text-align: left;
+}
+
+.drive-list-table th {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.row-empty {
+  color: var(--md-sys-color-on-surface-variant);
+  text-align: center;
+}
+
+.drive-list-table .danger {
+  border-color: rgba(179, 38, 30, 0.24);
+  color: #b3261e;
+}
+
+.drive-restore-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 24px 24px;
+}
+
+.drive-page-size {
+  display: grid;
+  gap: 8px;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 14px;
+}
+
+.drive-page-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -254,6 +396,26 @@ body {
   .settings-header,
   .setting-item {
     grid-template-columns: 1fr;
+  }
+
+  .drive-restore-dialog {
+    width: calc(100% - 20px);
+  }
+
+  .drive-list-wrap,
+  .drive-restore-actions,
+  .drive-restore-copy,
+  .drive-restore-header {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .drive-restore-header {
+    padding-top: 18px;
+  }
+
+  .drive-restore-actions {
+    justify-content: stretch;
   }
 
   .panel-header,

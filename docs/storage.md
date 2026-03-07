@@ -1,6 +1,6 @@
 # Storage Model
 
-TabMD stores everything completely offline in the local extension environment using `chrome.storage.local` with the `unlimitedStorage` permission to ensure notes aren't silently truncated by browser quotas.
+TabMD stores everything locally in the extension environment using `chrome.storage.local` with the `unlimitedStorage` permission to ensure notes aren't silently truncated by browser quotas. Google Drive backup is optional and manual; it adds local metadata keys plus remote backup files in the user's own Drive account.
 
 ## Storage Keys
 
@@ -8,6 +8,12 @@ TabMD stores everything completely offline in the local extension environment us
 const STORAGE_KEYS = {
   settings: 'tabmd:settings',
   notes: 'tabmd:notes'
+} as const;
+
+const DRIVE_STORAGE_KEYS = {
+  driveBackupIndex: 'tabmd:driveBackupIndex',
+  installId: 'tabmd:driveInstallId',
+  retentionCount: 'tabmd:driveRetentionCount'
 } as const;
 ```
 
@@ -32,5 +38,38 @@ export type NoteRecord = {
 ```typescript
 export type TabmdSettings = {
   theme: 'os' | 'light' | 'dark';
+};
+```
+
+### Drive Backup Metadata
+
+These keys support the manual Google Drive backup feature in the options page. They are local cache/settings only; the backup file contents themselves live in the user's Google Drive.
+
+```typescript
+type DriveBackupEntry = {
+  fileId: string;
+  fileName: string;
+  timestamp: number;
+  size: number;
+  noteCount: number;
+};
+
+type DriveBackupIndex = {
+  installId: string;
+  backups: DriveBackupEntry[];
+};
+```
+
+### Drive Backup Payload
+
+Each uploaded Drive backup stores a full snapshot of notes and settings:
+
+```typescript
+type SerializedBackupPayload = {
+  version: number;
+  timestamp: number;
+  installId: string;
+  notes: Record<string, NoteRecord>;
+  settings: TabmdSettings;
 };
 ```

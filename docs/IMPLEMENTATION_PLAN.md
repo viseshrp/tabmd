@@ -1,5 +1,7 @@
 # IMPLEMENTATION_PLAN.md — TabMD Engineering Plan
 
+> Note: this plan documents the original local-only TabMD build. Optional Google Drive backup was added later and is documented in `README.md`, `docs/storage.md`, `docs/TESTING.md`, and `docs/SPEC.md`.
+
 ## 1. Proposed Architecture
 
 TabMD is a WXT-based Chrome MV3 extension. The existing scaffold already provides the WXT build system, Biome linting, Vitest unit/integration tests, Playwright E2E tests, and GitHub Actions CI/CD.

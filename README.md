@@ -4,9 +4,9 @@ TabMD is a Chrome MV3 extension that replaces the default new tab page with a lo
 
 The current implementation is intentionally narrow:
 
-- Offline only
-- No accounts or sync
-- No network permissions
+- Local-first by default
+- No automatic sync or background upload
+- Optional manual Google Drive backup/restore
 - One note per tab
 - Save on tab blur / page hide
 - Popup for recent notes
@@ -22,6 +22,7 @@ The current implementation is intentionally narrow:
 - Export current note as a `.md` file
 - Focus mode that expands the editor to the full workspace while keeping an explicit exit control visible
 - Theme setting with `os`, `light`, and `dark` modes
+- Optional manual Google Drive backup/restore with retention and restore pagination
 - Recent-notes popup limited to the 20 most recently edited notes
 - Full notes page with client-side search across titles and body content
 
@@ -39,12 +40,18 @@ If the hash is missing, TabMD generates a new UUID with `crypto.randomUUID()` an
 
 ### Persistence
 
-TabMD stores two keys in `chrome.storage.local`:
+TabMD stores note data in `chrome.storage.local` and keeps a few additional local-only keys for optional Drive backup metadata:
 
 ```ts
 const STORAGE_KEYS = {
   settings: 'tabmd:settings',
   notes: 'tabmd:notes'
+} as const;
+
+const DRIVE_STORAGE_KEYS = {
+  driveBackupIndex: 'tabmd:driveBackupIndex',
+  installId: 'tabmd:driveInstallId',
+  retentionCount: 'tabmd:driveRetentionCount'
 } as const;
 ```
 
@@ -114,6 +121,9 @@ Responsibilities:
 - Read and write the theme setting
 - Apply the chosen theme immediately
 - Show a snackbar after saves
+- Connect/disconnect Google Drive for manual backups
+- Upload note/settings snapshots to Drive and restore them on demand
+- Manage retention and restore-dialog pagination
 
 ### Background service worker
 
@@ -126,6 +136,7 @@ The background worker is intentionally minimal. The popup is wired from the mani
 ```text
 entrypoints/
   background/   background service worker
+  drive/        Google Drive auth, REST API, and backup orchestration
   list/         note management page
   newtab/       editor surface
   options/      settings page
@@ -211,6 +222,7 @@ Current automated coverage focuses on:
 - Search and snippet selection
 - Notes storage CRUD behavior
 - Export filename sanitization
+- Google Drive auth, Drive REST helpers, backup orchestration, and options-page backup flows
 - Background entrypoint loading
 - Options entrypoint initialization
 
@@ -222,15 +234,30 @@ The extension currently requests:
 
 - `storage`
 - `unlimitedStorage`
+- `identity`
+- `https://www.googleapis.com/` host permission
 
-No network permission is required. No remote sync path is implemented.
+Google Drive backup is manual and optional. OAuth setup for unpacked builds requires:
+
+- `GOOGLE_OAUTH_CLIENT_ID`
+- `CHROME_EXTENSION_KEY` or `EXTENSION_MANIFEST_KEY`
+
+Without those values, the Drive UI still renders but authentication cannot complete successfully.
+
+## Google Drive Manual Backup
+
+1. Open the options page.
+2. Click `Connect to Google Drive` and approve access.
+3. Set `Retention` to the number of backups you want to keep.
+4. Click `Backup now` to upload all notes and current settings.
+5. Click `Restore from backup` to browse Drive snapshots and restore one into local storage.
 
 ## Known Constraints
 
 - Save behavior is blur-driven, not per-keystroke.
 - Multiple tabs pointed at the same note use last-write-wins behavior.
 - Search is client-side over the in-memory note list loaded for the page.
-- Notes are local to the browser profile where the extension is installed.
+- Notes are local to the browser profile unless you explicitly run a manual Drive backup.
 
 ## Related Docs
 
@@ -242,4 +269,4 @@ No network permission is required. No remote sync path is implemented.
 
 ## Status
 
-The repository is no longer a generic WXT scaffold. It now contains a working TabMD implementation centered on a local-only Markdown new tab workflow.
+The repository is no longer a generic WXT scaffold. It now contains a working TabMD implementation centered on a local-first Markdown new tab workflow with optional manual Google Drive backup.

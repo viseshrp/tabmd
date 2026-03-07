@@ -2,7 +2,7 @@
 
 ## 1. Product Overview
 
-TabMD is a Chrome extension that replaces the default new tab page with a Markdown note editor. Each new tab opens a brand-new note. Notes are stored locally in `chrome.storage.local` and are never transmitted externally.
+TabMD is a Chrome extension that replaces the default new tab page with a Markdown note editor. Each new tab opens a brand-new note. Notes are stored locally in `chrome.storage.local` by default, with an optional manual Google Drive backup/restore flow available from the options page.
 
 The editor experience is powered by EasyMDE. The product should feel lightweight, minimal, and writing-focused — not like a developer IDE.
 
@@ -16,8 +16,9 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
 2. One note per tab, identified by a unique ID embedded in the URL hash.
 3. Provide a complete GFM-compatible preview (tables, task lists, fenced code blocks with syntax highlighting).
 4. Make note management fast: popup for quick access, full list page for searching, renaming, and deleting.
-5. Keep all data local-only, using `chrome.storage.local` with `unlimitedStorage`.
+5. Keep all primary note-taking flows local-first, using `chrome.storage.local` with `unlimitedStorage`.
 6. Support light/dark theming with OS-default detection and manual override.
+7. Allow users to create and restore manual Google Drive backups without turning TabMD into a sync product.
 
 ---
 
@@ -41,7 +42,7 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
 2. **Instant.** A new tab must feel as fast as Chrome's default. No loading spinners, no splash screens.
 3. **Minimal.** Every visible element must serve the writing or note-management workflow. No decorative chrome.
 4. **Predictable.** Notes save automatically on blur. Titles derive automatically. The user never thinks about persistence.
-5. **Local.** Data never leaves the browser. The extension requests no network permissions.
+5. **Local-first.** Data stays in the browser unless the user explicitly runs a manual Google Drive backup or restore action.
 
 ---
 
@@ -103,6 +104,22 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
 1. On the editor page, the user activates focus mode.
 2. Focus mode hides the surrounding workspace chrome and expands the editor to fill the viewport.
 3. The user exits focus mode via the same toggle or Escape.
+
+### 5.9 Manual Google Drive Backup
+
+1. User opens the options page.
+2. Connects Google Drive explicitly.
+3. Sets a retention count.
+4. Clicks "Backup now".
+5. TabMD uploads a JSON snapshot containing all notes and current settings into the user's Drive account.
+
+### 5.10 Restore from Google Drive
+
+1. User opens the options page.
+2. Clicks "Restore from backup".
+3. TabMD loads one page of backup metadata from Google Drive.
+4. User selects a backup row and confirms restore.
+5. The selected snapshot overwrites local notes and settings.
 
 ---
 
@@ -208,12 +225,21 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
 - **Theme** setting:
   - Three choices: "Use system", "Light", "Dark".
   - Radio buttons, following the existing options page pattern.
+- **Google Drive backup** section:
+  - Connect/disconnect button.
+  - Backup-now button.
+  - Restore dialog opener.
+  - Retention number input.
+  - Restore dialog with backup table and explicit pagination controls.
 
 **Behavior:**
 - On load, read current settings from storage and populate controls.
 - Changes save immediately (on `change` event, same as existing scaffold pattern).
 - Snackbar confirmation on save ("Settings saved.").
 - Theme changes apply immediately to the options page itself.
+- Drive auth status is checked non-interactively on load.
+- Drive backup uploads all notes plus the current settings snapshot.
+- Restore replaces local notes and settings with the selected backup payload.
 - Reachable from: popup, full list page, new tab editor page.
 
 ---
