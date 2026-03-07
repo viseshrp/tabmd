@@ -19,6 +19,6 @@ We believe that your thoughts should be captured instantly. That's why every tim
 *   **Effortless Management**: Seamlessly browse, search, and delete your notes from the built-in popup and list view.
 *   **Save-on-Blur**: Your notes are instantly saved without any manual clicking or saving buttons.
 *   **Theme Integration**: Sync your editor interface to match your operating system, or manually choose between Light or Dark modes.
-*   **Optional Google Drive Backup**: Create manual backups of your notes and settings in your own Drive account, then restore any saved snapshot later.
+*   **Optional Google Drive Backup**: Create manual backups of your notes in your own Drive account, then restore any saved snapshot later.
 
 TabMD is free and open-source. Replace your boring empty tab with the notes you need. Start writing with TabMD.

@@ -287,7 +287,6 @@ describe("drive backup integration", () => {
 								modifiedAt: 11,
 							},
 						},
-						settings: { theme: "dark" },
 					}),
 					{
 						status: 200,
@@ -351,8 +350,8 @@ describe("drive backup integration", () => {
 		);
 
 		expect(mock.__storageData[STORAGE_KEYS.settings]).toEqual({
-			theme: "dark",
+			theme: "light",
 		});
-		expect(document.documentElement.getAttribute("data-theme")).toBe("dark");
+		expect(document.documentElement.getAttribute("data-theme")).toBe("light");
 	});
 });

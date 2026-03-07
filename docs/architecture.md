@@ -17,7 +17,7 @@ TabMD is a local-first Chrome MV3 extension. It uses the `wxt` framework to bund
    Handles visual theme preference (OS, Light, Dark mode) plus optional Google Drive connect/backup/restore actions.
 
 5. **Drive Backup Modules** (`entrypoints/drive/`)
-   Wrap `chrome.identity`, call the Google Drive REST API, serialize note/settings snapshots, enforce retention, and restore backups into local storage.
+   Wrap `chrome.identity`, call the Google Drive REST API, serialize note snapshots, enforce retention, and restore backups into local storage.
 
 ## Data and Persistence
 

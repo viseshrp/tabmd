@@ -169,12 +169,7 @@ function renderDriveBackups(
  * Initializes the optional Google Drive backup section.
  * The section stays isolated so missing Drive-specific DOM never breaks core theme settings.
  */
-async function initDriveBackupSection(
-	documentRef: Document,
-	options?: {
-		onSettingsRestored?: (settings: TabmdSettings) => void | Promise<void>;
-	},
-): Promise<void> {
+async function initDriveBackupSection(documentRef: Document): Promise<void> {
 	const DEFAULT_RESTORE_LIST_PAGE_SIZE = 5;
 	const driveSectionEl =
 		documentRef.querySelector<HTMLElement>(".drive-backup");
@@ -663,8 +658,6 @@ async function initDriveBackupSection(
 					isConnected = true;
 					const restored = await restoreFromBackup(fileId, token);
 					closeRestoreDialog();
-					const restoredSettings = await readSettings();
-					await options?.onSettingsRestored?.(restoredSettings);
 					setStatus(
 						driveStatusEl,
 						`Restore completed. ${restored.restoredNotes} note${restored.restoredNotes === 1 ? "" : "s"} restored.`,
@@ -819,12 +812,7 @@ export async function initSettingsPage(
 			});
 		}
 
-		await initDriveBackupSection(documentRef, {
-			onSettingsRestored: async (restoredSettings) => {
-				currentSettings = restoredSettings;
-				syncThemeControls(restoredSettings.theme);
-			},
-		});
+		await initDriveBackupSection(documentRef);
 	} catch (err: unknown) {
 		logExtensionError("Failed to initialize options page", err, "options_page");
 	}

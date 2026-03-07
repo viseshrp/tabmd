@@ -3,14 +3,7 @@
  * serialize local data, upload/list/delete Drive files, maintain a local backup index,
  * and restore a backup snapshot back into local storage.
  */
-import {
-	normalizeNotesRecord,
-	normalizeSettings,
-	readSettings,
-	writeSettings,
-	type NoteRecord,
-	type TabmdSettings,
-} from "../shared/storage";
+import { normalizeNotesRecord, type NoteRecord } from "../shared/storage";
 import { readAllNotes, writeAllNotes } from "../shared/notes";
 import { logExtensionError, runWithConcurrency } from "../shared/utils";
 import {
@@ -111,7 +104,6 @@ export async function getOrCreateInstallId(): Promise<string> {
 /** Creates the JSON payload that is uploaded into Drive for one backup snapshot. */
 export function serializeBackup(
 	notes: Record<string, NoteRecord>,
-	settings: TabmdSettings,
 	installId: string,
 	timestamp = Date.now(),
 ): SerializedBackupPayload {
@@ -120,7 +112,6 @@ export function serializeBackup(
 		timestamp,
 		installId,
 		notes,
-		settings,
 	};
 }
 
@@ -335,15 +326,13 @@ export async function performBackup(
 	deps: DriveApiDeps = defaultDeps,
 	preloaded?: {
 		notes?: Record<string, NoteRecord>;
-		settings?: TabmdSettings;
 	},
 ): Promise<DriveBackupEntry[]> {
 	const installId = await getOrCreateInstallId();
-	const settings = preloaded?.settings ?? (await readSettings());
 	const notes = preloaded?.notes ?? (await readAllNotes());
 
 	const timestamp = Date.now();
-	const payload = serializeBackup(notes, settings, installId, timestamp);
+	const payload = serializeBackup(notes, installId, timestamp);
 	const content = JSON.stringify(payload, null, 2);
 
 	const installFolderId = await getInstallFolderId(installId, token, deps);
@@ -371,7 +360,7 @@ export async function performBackup(
 }
 
 /**
- * Downloads a backup payload, validates it, then overwrites local notes and settings.
+ * Downloads a backup payload, validates it, then overwrites local notes.
  * The note dictionary is normalized before write so malformed entries are silently dropped.
  */
 export async function restoreFromBackup(
@@ -385,13 +374,9 @@ export async function restoreFromBackup(
 	}
 
 	const notesRaw = (rawPayload as { notes?: unknown }).notes;
-	const settingsRaw = (rawPayload as { settings?: unknown }).settings;
-
 	const notes = normalizeNotesRecord(notesRaw);
-	const settings = normalizeSettings(settingsRaw);
 
 	await writeAllNotes(notes);
-	await writeSettings(settings);
 
 	return { restoredNotes: Object.keys(notes).length };
 }

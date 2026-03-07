@@ -111,7 +111,7 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
 2. Connects Google Drive explicitly.
 3. Sets a retention count.
 4. Clicks "Backup now".
-5. TabMD uploads a JSON snapshot containing all notes and current settings into the user's Drive account.
+5. TabMD uploads a JSON snapshot containing all notes into the user's Drive account.
 
 ### 5.10 Restore from Google Drive
 
@@ -119,7 +119,7 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
 2. Clicks "Restore from backup".
 3. TabMD loads one page of backup metadata from Google Drive.
 4. User selects a backup row and confirms restore.
-5. The selected snapshot overwrites local notes and settings.
+5. The selected snapshot overwrites local notes.
 
 ---
 
@@ -238,8 +238,8 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
 - Snackbar confirmation on save ("Settings saved.").
 - Theme changes apply immediately to the options page itself.
 - Drive auth status is checked non-interactively on load.
-- Drive backup uploads all notes plus the current settings snapshot.
-- Restore replaces local notes and settings with the selected backup payload.
+- Drive backup uploads all notes.
+- Restore replaces local notes with the selected backup payload.
 - Reachable from: popup, full list page, new tab editor page.
 
 ---

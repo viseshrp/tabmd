@@ -122,7 +122,7 @@ Responsibilities:
 - Apply the chosen theme immediately
 - Show a snackbar after saves
 - Connect/disconnect Google Drive for manual backups
-- Upload note/settings snapshots to Drive and restore them on demand
+- Upload note snapshots to Drive and restore them on demand
 - Manage retention and restore-dialog pagination
 
 ### Background service worker
@@ -237,19 +237,14 @@ The extension currently requests:
 - `identity`
 - `https://www.googleapis.com/` host permission
 
-Google Drive backup is manual and optional. OAuth setup for unpacked builds requires:
-
-- `GOOGLE_OAUTH_CLIENT_ID`
-- `CHROME_EXTENSION_KEY` or `EXTENSION_MANIFEST_KEY`
-
-Without those values, the Drive UI still renders but authentication cannot complete successfully.
+Google Drive backup is manual and optional. This build uses the same fixed OAuth client ID and manifest key pairing as the reference implementation so the extension ID stays stable for Drive auth.
 
 ## Google Drive Manual Backup
 
 1. Open the options page.
 2. Click `Connect to Google Drive` and approve access.
 3. Set `Retention` to the number of backups you want to keep.
-4. Click `Backup now` to upload all notes and current settings.
+4. Click `Backup now` to upload all notes.
 5. Click `Restore from backup` to browse Drive snapshots and restore one into local storage.
 
 ## Known Constraints

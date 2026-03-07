@@ -72,8 +72,8 @@ export function formatDriveAuthError(
 	return [
 		"Google Drive OAuth client configuration does not match this extension build.",
 		`Current extension ID: ${extensionId}.`,
-		"Set GOOGLE_OAUTH_CLIENT_ID to a Chrome Extension OAuth client created for this exact extension ID.",
-		"Set CHROME_EXTENSION_KEY (or EXTENSION_MANIFEST_KEY) to the matching private key, then rebuild and reload the extension.",
+		"This build expects the baked-in OAuth client and manifest key to stay paired.",
+		"Verify the packaged manifest key and OAuth client configuration have not been changed, then rebuild and reload the extension.",
 	].join(" ");
 }
 

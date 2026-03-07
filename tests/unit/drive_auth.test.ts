@@ -44,8 +44,8 @@ describe("drive auth helpers", () => {
 			"fallback",
 		);
 		expect(message).toContain("extension-123");
-		expect(message).toContain("GOOGLE_OAUTH_CLIENT_ID");
-		expect(message).toContain("CHROME_EXTENSION_KEY");
+		expect(message).toContain("baked-in OAuth client");
+		expect(message).toContain("manifest key");
 	});
 
 	it("removes a cached token without throwing", async () => {

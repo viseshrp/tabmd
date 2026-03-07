@@ -62,7 +62,7 @@ type DriveBackupIndex = {
 
 ### Drive Backup Payload
 
-Each uploaded Drive backup stores a full snapshot of notes and settings:
+Each uploaded Drive backup stores a full snapshot of notes:
 
 ```typescript
 type SerializedBackupPayload = {
@@ -70,6 +70,5 @@ type SerializedBackupPayload = {
   timestamp: number;
   installId: string;
   notes: Record<string, NoteRecord>;
-  settings: TabmdSettings;
 };
 ```

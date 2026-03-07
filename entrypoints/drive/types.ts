@@ -2,7 +2,7 @@
  * Shared Drive-backup types and constants used by the backup orchestration,
  * Drive REST client, and options-page UI.
  */
-import type { NoteRecord, TabmdSettings } from "../shared/storage";
+import type { NoteRecord } from "../shared/storage";
 import {
 	createTabmdBackupFileName,
 	extractNoteCountFromBackupFileName,
@@ -21,7 +21,7 @@ export const DEFAULT_RETENTION_COUNT = 10;
 export const MIN_RETENTION_COUNT = 1;
 export const MAX_RETENTION_COUNT = 500;
 
-/** Storage keys reserved for optional Drive backup metadata and settings. */
+/** Storage keys reserved for optional Drive backup metadata. */
 export const DRIVE_STORAGE_KEYS = {
 	driveBackupIndex: "tabmd:driveBackupIndex",
 	installId: "tabmd:driveInstallId",
@@ -49,7 +49,6 @@ export type SerializedBackupPayload = {
 	timestamp: number;
 	installId: string;
 	notes: Record<string, NoteRecord>;
-	settings: TabmdSettings;
 };
 
 /** Minimal Drive metadata fields required for listing and retention decisions. */

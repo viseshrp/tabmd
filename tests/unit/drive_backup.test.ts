@@ -47,7 +47,6 @@ describe("drive backup orchestration", () => {
 					modifiedAt: 2,
 				},
 			},
-			{ theme: "dark" },
 			"install-1",
 			1700000000000,
 		);
@@ -56,7 +55,6 @@ describe("drive backup orchestration", () => {
 		expect(payload.installId).toBe("install-1");
 		expect(payload.timestamp).toBe(1700000000000);
 		expect(Object.keys(payload.notes)).toEqual(["note-1"]);
-		expect(payload.settings.theme).toBe("dark");
 
 		const fileName = createBackupFileName(1700000000000, 4);
 		expect(fileName).toContain("tabmd-backup-");
@@ -273,14 +271,11 @@ describe("drive backup orchestration", () => {
 						modifiedAt: 11,
 					},
 				},
-				settings: {
-					theme: "dark",
-				},
 			}),
 		});
 		expect(restored.restoredNotes).toBe(1);
 		expect(mock.__storageData[STORAGE_KEYS.settings]).toEqual({
-			theme: "dark",
+			theme: "light",
 		});
 	});
 
