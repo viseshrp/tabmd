@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>tabmd settings</title>
+    <link rel="stylesheet" href="../shared/theme.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header>
+        <h1>tabmd settings</h1>
+        <p class="subtitle">Generic preferences for the starter scaffold.</p>
+      </header>
+      <section class="settings">
+        <label class="setting">
+          <input id="openInNewTab" type="checkbox" />
+          <span>Open starter resources in a new tab</span>
+        </label>
+        <label class="setting">
+          <input id="compactCards" type="checkbox" />
+          <span>Use compact cards for content lists</span>
+        </label>
+        <section class="setting-group">
+          <div class="setting-label">Theme</div>
+          <p class="setting-help">Choose how the extension pages handle light and dark appearance.</p>
+          <label class="setting-radio"><input id="themeOs" type="radio" name="theme" value="os" /><span>Use system</span></label>
+          <label class="setting-radio"><input id="themeLight" type="radio" name="theme" value="light" /><span>Light</span></label>
+          <label class="setting-radio"><input id="themeDark" type="radio" name="theme" value="dark" /><span>Dark</span></label>
+        </section>
+      </section>
+      <div id="snackbar" class="snackbar" role="status" aria-live="polite"></div>
+    </main>
+    <script type="module" src="./index.ts"></script>
+  </body>
+</html>

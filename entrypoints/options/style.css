@@ -1,0 +1,99 @@
+:root {
+  accent-color: var(--md-sys-color-primary);
+}
+
+body {
+  margin: 0;
+  padding: 24px;
+  background: var(--md-sys-color-background);
+  color: var(--md-sys-color-on-background);
+  font-family: var(--md-sys-typescale-body-font);
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.app {
+  width: 100%;
+  max-width: 680px;
+  background: var(--md-sys-color-surface);
+  padding: 32px;
+  border-radius: var(--md-sys-shape-corner-large);
+  box-shadow: var(--md-sys-elevation-1);
+  height: fit-content;
+}
+
+header {
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-size: 28px;
+  font-weight: 400;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.setting {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.setting-group {
+  margin-top: 8px;
+  padding: 20px;
+  border-radius: var(--md-sys-shape-corner-medium);
+  border: 1px solid rgba(var(--md-sys-color-outline-rgb), 0.4);
+}
+
+.setting-label {
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.setting-help {
+  margin: 0 0 16px;
+  color: var(--md-sys-color-on-surface-variant);
+  line-height: 1.5;
+}
+
+.setting-radio {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  cursor: pointer;
+}
+
+.snackbar {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--md-sys-color-on-surface);
+  color: var(--md-sys-color-surface);
+  padding: 14px 24px;
+  border-radius: 28px;
+  font-size: 14px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  box-shadow: var(--md-sys-elevation-2);
+}
+
+.snackbar.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
