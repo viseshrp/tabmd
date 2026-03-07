@@ -1,3 +1,4 @@
+/** Vitest configuration for unit and integration tests. */
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
@@ -9,14 +10,18 @@ export default defineConfig({
       reporter: ['text', 'html', 'lcov'],
       reportsDirectory: 'coverage',
       thresholds: {
-        statements: 0,
-        branches: 0,
-        functions: 0,
-        lines: 0
+        statements: 90,
+        branches: 90,
+        functions: 90,
+        lines: 90
       },
       include: ['entrypoints/**/*.ts'],
-      exclude: ['**/*.d.ts', 'tests/**/*.ts', 'entrypoints/drive-auth/index.ts']
+      // Exclude the EasyMDE browser wrapper; behavior is covered through newtab integration and Playwright.
+      exclude: [
+        '**/*.d.ts',
+        'tests/**/*.ts',
+        'entrypoints/newtab/editor.ts'
+      ]
     }
   }
 });
-

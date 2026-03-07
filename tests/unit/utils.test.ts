@@ -6,8 +6,10 @@ describe('utils', () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     logExtensionError('Failed', new Error('boom'), 'storage');
+    logExtensionError('Failed object', new Error('boom'), { operation: 'options_page' });
 
     expect(spy).toHaveBeenCalledWith('[tabmd:storage] Failed', expect.any(Error));
+    expect(spy).toHaveBeenCalledWith('[tabmd:options_page] Failed object', expect.any(Error));
     spy.mockRestore();
   });
 

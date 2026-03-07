@@ -108,4 +108,66 @@ describe('list entrypoint', () => {
     expect(document.getElementById('no-results')?.hidden).toBe(false);
     expect(document.getElementById('notes-grid')?.hidden).toBe(true);
   });
+
+  it('shows the empty state and handles cancel paths', async () => {
+    const emptyMock = createMockChrome({
+      initialStorage: {
+        [STORAGE_KEYS.notes]: {}
+      }
+    });
+    setMockChrome(emptyMock);
+
+    await import('../../entrypoints/list/index');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(document.getElementById('empty-state')?.hidden).toBe(false);
+  });
+
+  it('shows snackbar errors when rename or delete persistence fails', async () => {
+    const alpha = makeNote('alpha', 'Body', 'Alpha', 100);
+    const mock = createMockChrome({
+      initialStorage: {
+        [STORAGE_KEYS.notes]: {
+          [alpha.id]: alpha
+        }
+      }
+    });
+    const originalSet = mock.storage.local.set;
+    mock.storage.local.set = async (payload) => {
+      if (STORAGE_KEYS.notes in payload) {
+        throw new Error('persist failed');
+      }
+      await originalSet(payload);
+    };
+    setMockChrome(mock);
+    vi.stubGlobal('prompt', vi.fn(() => 'Renamed'));
+    vi.stubGlobal('confirm', vi.fn(() => true));
+
+    await import('../../entrypoints/list/index');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    document.querySelector<HTMLButtonElement>('.action-btn')?.click();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(document.getElementById('snackbar')?.textContent).toContain('Failed to rename note');
+
+    document.querySelector<HTMLButtonElement>('.delete-btn')?.click();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(document.getElementById('snackbar')?.textContent).toContain('Failed to delete note');
+  });
+
+  it('shows a load error snackbar when notes cannot be read', async () => {
+    const mock = createMockChrome();
+    mock.storage.local.get = async (keys) => {
+      if (keys && typeof keys === 'object' && STORAGE_KEYS.notes in keys) {
+        throw new Error('read failed');
+      }
+      return {};
+    };
+    setMockChrome(mock);
+
+    await import('../../entrypoints/list/index');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(document.getElementById('snackbar')?.textContent).toContain('Error loading notes');
+  });
 });

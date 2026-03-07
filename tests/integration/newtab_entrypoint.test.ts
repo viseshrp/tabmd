@@ -151,4 +151,18 @@ describe('newtab entrypoint', () => {
     expect(initEditor).toHaveBeenCalledWith('# Existing');
     expect(initTitleActions).toHaveBeenCalledWith('Saved title', '# Existing');
   });
+
+  it('treats an unknown hash as a new note with that id', async () => {
+    window.history.replaceState(null, '', '/newtab.html#missing-id');
+    readNote.mockResolvedValue(null);
+
+    await import('../../entrypoints/newtab/index');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(generateUUID).not.toHaveBeenCalled();
+    expect(initEditor).toHaveBeenCalledWith('');
+    expect(initSaveTracking).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'missing-id', content: '', title: null })
+    );
+  });
 });

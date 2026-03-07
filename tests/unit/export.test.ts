@@ -60,4 +60,33 @@ describe('export', () => {
         document.body.appendChild = originalAppend;
         document.body.removeChild = originalRemove;
     });
+
+    it('falls back to Untitled when there is no derived title', () => {
+        const originalCreateElement = document.createElement.bind(document);
+        let appendedChild: HTMLAnchorElement | null = null;
+
+        document.createElement = (tag: string) => originalCreateElement(tag);
+
+        const originalAppend = document.body.appendChild.bind(document.body);
+        document.body.appendChild = <T extends Node>(child: T) => {
+            appendedChild = child as unknown as HTMLAnchorElement;
+            return child;
+        };
+
+        const originalRemove = document.body.removeChild.bind(document.body);
+        document.body.removeChild = <T extends Node>(child: T) => child;
+
+        performExport(null, '');
+
+        if (!appendedChild) {
+            throw new Error('Expected export to append an anchor element');
+        }
+
+        const anchor: HTMLAnchorElement = appendedChild;
+        expect(anchor.download).toBe('Untitled.md');
+
+        document.createElement = originalCreateElement;
+        document.body.appendChild = originalAppend;
+        document.body.removeChild = originalRemove;
+    });
 });

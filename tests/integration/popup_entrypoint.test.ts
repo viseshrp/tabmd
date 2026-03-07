@@ -76,4 +76,20 @@ describe('popup entrypoint', () => {
     expect(document.getElementById('empty-state')?.hidden).toBe(false);
     expect(document.getElementById('note-list')?.hidden).toBe(true);
   });
+
+  it('shows an error state when notes fail to load', async () => {
+    const mock = createMockChrome();
+    mock.storage.local.get = async (keys) => {
+      if (keys && typeof keys === 'object' && STORAGE_KEYS.notes in keys) {
+        throw new Error('load failed');
+      }
+      return {};
+    };
+    setMockChrome(mock);
+
+    await import('../../entrypoints/popup/index');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(document.getElementById('empty-state')?.textContent).toContain('Error loading notes.');
+  });
 });

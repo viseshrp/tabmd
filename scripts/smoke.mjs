@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 const requiredFiles = [
   'package.json',
   'wxt.config.ts',
-  'docs/README.md',
+  'README.md',
   'entrypoints/background/index.ts',
   'entrypoints/newtab/index.ts',
   'entrypoints/options/index.ts',

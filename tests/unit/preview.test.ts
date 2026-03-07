@@ -13,6 +13,11 @@ describe('preview helpers', () => {
     expect(html).toContain('hljs');
   });
 
+  it('falls back to auto highlighting for unknown languages', async () => {
+    const html = await renderPreview('```unknownlang\nvalue\n```');
+    expect(html).toContain('hljs');
+  });
+
   it('shows and hides the preview container', () => {
     const container = document.getElementById('preview-container') as HTMLDivElement;
 
@@ -23,5 +28,12 @@ describe('preview helpers', () => {
     hidePreviewContainer();
     expect(container.hidden).toBe(true);
     expect(container.innerHTML).toBe('');
+  });
+
+  it('does nothing when the preview container is missing', () => {
+    document.body.innerHTML = '';
+
+    expect(() => showPreviewContainer('<p>preview</p>')).not.toThrow();
+    expect(() => hidePreviewContainer()).not.toThrow();
   });
 });

@@ -58,4 +58,35 @@ describe('title actions', () => {
     expect(input.value).toBe('Initial title');
     expect(updateNoteTitle).toHaveBeenCalledWith('Initial title');
   });
+
+  it('commits the title on enter and exits early when controls are missing', async () => {
+    const { initTitleActions } = await import('../../entrypoints/newtab/title');
+    const display = document.getElementById('note-title-display') as HTMLHeadingElement;
+    const input = document.getElementById('note-title-input') as HTMLInputElement;
+
+    initTitleActions('Initial title', 'Body');
+    display.click();
+    input.value = 'Enter title';
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+
+    expect(updateNoteTitle).toHaveBeenCalledWith('Enter title');
+
+    document.body.innerHTML = '';
+    expect(() => initTitleActions(null, '')).not.toThrow();
+  });
+
+  it('clears manual titles back to derived titles', async () => {
+    const { initTitleActions } = await import('../../entrypoints/newtab/title');
+    const display = document.getElementById('note-title-display') as HTMLHeadingElement;
+    const input = document.getElementById('note-title-input') as HTMLInputElement;
+
+    getEditorContent.mockReturnValue('# Derived again');
+    initTitleActions('Manual title', '# Derived again');
+    display.click();
+    input.value = '   ';
+    input.dispatchEvent(new FocusEvent('blur'));
+
+    expect(updateNoteTitle).toHaveBeenCalledWith(null);
+    expect(display.textContent).toBe('Derived again');
+  });
 });

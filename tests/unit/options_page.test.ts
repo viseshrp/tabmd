@@ -49,4 +49,19 @@ describe('options settings page', () => {
     const { initSettingsPage } = await import('../../entrypoints/options/settings_page');
     await expect(initSettingsPage()).resolves.toBeUndefined();
   });
+
+  it('removes the theme attribute for os mode', async () => {
+    const mock = createMockChrome({
+      initialStorage: {
+        [STORAGE_KEYS.settings]: { theme: 'os' }
+      }
+    });
+    setMockChrome(mock);
+    document.documentElement.setAttribute('data-theme', 'dark');
+
+    const { initSettingsPage } = await import('../../entrypoints/options/settings_page');
+    await initSettingsPage();
+
+    expect(document.documentElement.hasAttribute('data-theme')).toBe(false);
+  });
 });

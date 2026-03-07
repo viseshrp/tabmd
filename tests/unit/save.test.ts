@@ -130,4 +130,26 @@ describe('save tracking', () => {
       'save_logic'
     );
   });
+
+  it('saves on beforeunload', async () => {
+    let beforeUnloadHandler: EventListener | undefined;
+    vi.spyOn(window, 'addEventListener').mockImplementation((
+      type: string,
+      handler: EventListenerOrEventListenerObject,
+      _options?: boolean | AddEventListenerOptions
+    ) => {
+      if (type === 'beforeunload' && typeof handler === 'function') {
+        beforeUnloadHandler = handler;
+      }
+    });
+
+    const { initSaveTracking } = await import('../../entrypoints/newtab/save');
+    getEditorContent.mockReturnValue('Unload content');
+    initSaveTracking(makeNote());
+
+    beforeUnloadHandler?.(new Event('beforeunload'));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(writeNote).toHaveBeenCalledWith(expect.objectContaining({ content: 'Unload content' }));
+  });
 });
