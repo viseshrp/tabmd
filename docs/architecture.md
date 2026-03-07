@@ -5,7 +5,7 @@ TabMD is a local-only Chrome MV3 extension. It uses the `wxt` framework to bundl
 ## Entrypoints
 
 1. **New Tab Page** (`entrypoints/newtab/index.ts`)
-   The core surface. Overrides Chrome's New Tab page. Instantiates an EasyMDE editor instance and handles interactions like previewing, title overrides, and note saving. Navigates by reading UUIDs from the URL hash.
+   The core surface. Overrides Chrome's New Tab page. Instantiates an EasyMDE editor instance, routes the Preview tab through EasyMDE's native preview mode, and handles title overrides plus note saving. Navigates by reading UUIDs from the URL hash.
 
 2. **Popup** (`entrypoints/popup/index.ts`)
    Provides a quick dropdown listing the 20 most recently modified notes. Reads them completely in-memory upon popup click, but keeps only a bounded top-20 list instead of sorting the full collection. Can't write or delete notes — defers editing and deleting actions to dedicated pages. The built extension serves this entrypoint as `popup.html`.

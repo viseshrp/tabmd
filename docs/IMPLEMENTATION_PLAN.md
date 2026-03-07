@@ -78,10 +78,10 @@ These files exist in the current scaffold but are not needed for TabMD:
 |---------------------------------------------|-------------------------------------------------------|
 | `entrypoints/newtab/index.html`             | New tab page HTML shell                               |
 | `entrypoints/newtab/index.ts`               | New tab page init: editor, save, title, preview       |
-| `entrypoints/newtab/editor.ts`              | EasyMDE setup, configuration, fullscreen              |
+| `entrypoints/newtab/editor.ts`              | EasyMDE setup, configuration, focus mode, native preview state |
 | `entrypoints/newtab/save.ts`                | Save-on-blur logic                                    |
 | `entrypoints/newtab/title.ts`               | Title derivation and manual override logic            |
-| `entrypoints/newtab/preview.ts`             | Preview rendering (Markdown → HTML)                   |
+| `entrypoints/newtab/preview.ts`             | Preview rendering (Markdown → HTML) used by EasyMDE preview hooks |
 | `entrypoints/newtab/export.ts`              | Export current note as .md                            |
 | `entrypoints/newtab/style.css`              | New tab page styles                                   |
 | `entrypoints/popup/index.html`              | Popup HTML shell                                      |
@@ -249,8 +249,8 @@ EasyMDE is the sole third-party runtime dependency. Add via `pnpm add easymde`.
 - **No EasyMDE toolbar** — TabMD has its own minimal UI (Editor/Preview tabs, focus mode button, export, options link). EasyMDE's built-in toolbar is disabled.
 - **No EasyMDE status bar** — disabled.
 - **No EasyMDE side-by-side** — not configured.
-- **Fullscreen** — use `easymde.toggleFullScreen()` programmatically, triggered by TabMD's own focus mode button.
-- **Preview** — use EasyMDE's `previewRender` hook to supply a custom rendering function, but the preview is showed/hidden by TabMD's own tab switching, not EasyMDE's preview toggle.
+- **Focus mode** — keep the visible editor surface active, hide surrounding workspace chrome, and leave an explicit exit control on screen.
+- **Preview** — use EasyMDE's `previewRender` hook as the single preview pipeline, and let TabMD's tabs switch EasyMDE's native preview mode on and off.
 
 ### 7.4 EasyMDE CSS
 
@@ -279,9 +279,9 @@ Use `highlight.js` for fenced code block syntax highlighting. Add via `pnpm add 
 
 1. User clicks "Preview" tab.
 2. Read current content from EasyMDE: `easymde.value()`.
-3. Render via `marked.parse(content)`.
-4. Insert rendered HTML into the preview container.
-5. Switch visibility: hide editor container, show preview container.
+3. EasyMDE switches into preview mode.
+4. EasyMDE calls `previewRender` with the current Markdown.
+5. The preview surface displays the rendered HTML in-place.
 
 ### 8.4 Libraries Required
 
@@ -423,7 +423,7 @@ This is the same Blob + anchor pattern used in the existing scaffold's `exportJs
 
 ### Phase 2: New Tab Editor Page
 
-1. Create `entrypoints/newtab/index.html` with HTML shell (title area, tab bar, editor container, preview container, toolbar).
+1. Create `entrypoints/newtab/index.html` with HTML shell (title area, tab bar, editor container, toolbar).
 2. Install `easymde` dependency.
 3. Create `entrypoints/newtab/editor.ts` — EasyMDE initialization and configuration.
 4. Create `entrypoints/newtab/save.ts` — save-on-blur logic.
@@ -467,7 +467,7 @@ This is the same Blob + anchor pattern used in the existing scaffold's `exportJs
 ### Phase 7: Export and Focus Mode
 
 1. Create `entrypoints/newtab/export.ts` — download current note as `.md`.
-2. Wire focus mode button to `easymde.toggleFullScreen()`.
+2. Wire focus mode button to the visible editor surface and keep an explicit exit control visible.
 3. Add unit tests for export filename sanitization.
 
 ### Phase 8: Background Simplification & Final Cleanup
@@ -564,4 +564,4 @@ tests/
 | Large note count slowing popup                 | Low        | Cap popup list to 20 most recent. Full list page handles the rest.  |
 | `marked` XSS from rendered HTML               | Medium     | Use `marked`'s `sanitize` option or DOMPurify. Verify.              |
 | highlight.js bundle size                       | Low        | Import only common language subsets, not the full bundle.            |
-| EasyMDE fullscreen conflicts with page layout  | Low        | Test fullscreen behavior. Use EasyMDE's native implementation.      |
+| EasyMDE preview DOM or focus styling conflicting with page layout | Low | Test preview and focus transitions against the page shell and override styles locally. |

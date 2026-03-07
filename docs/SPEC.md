@@ -66,7 +66,7 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
 ### 5.3 Preview a Note
 
 1. On the editor page, the user clicks the "Preview" tab (center-top).
-2. The editor is hidden; a rendered HTML preview replaces it.
+2. EasyMDE switches the writing surface into preview mode.
 3. The preview renders the current Markdown content with GFM features and syntax-highlighted code blocks.
 4. Clicking the "Editor" tab returns to the editor.
 
@@ -137,6 +137,7 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
 - Preview tab:
   - Preview content renders only when the Preview tab is first clicked (not eagerly).
   - Re-renders each time the Preview tab is clicked.
+  - Uses EasyMDE's native preview surface rather than a separate preview container.
   - Supports: GFM tables, task lists, fenced code blocks with syntax highlighting.
 - Focus mode keeps the editor visible, hides the surrounding workspace chrome, and leaves the focus toggle available as an exit control.
 - Export downloads the current note content as `<title>.md`.
@@ -279,7 +280,7 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
   - Tables.
   - Task lists (checkboxes).
   - Fenced code blocks with language-specified syntax highlighting.
-- Use EasyMDE's preview rendering hooks to integrate a Markdown renderer and syntax highlighter.
+- Use EasyMDE's native preview mode plus `previewRender` hooks to integrate a Markdown renderer and syntax highlighter.
 
 ### 7.7 Search Behavior
 

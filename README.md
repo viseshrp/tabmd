@@ -15,7 +15,7 @@ The current implementation is intentionally narrow:
 ## Features
 
 - Markdown editing with [EasyMDE](https://github.com/Ionaru/easy-markdown-editor)
-- Preview mode using GitHub-flavored Markdown via `marked`
+- Preview mode using EasyMDE's native preview surface with GitHub-flavored Markdown via `marked`
 - Syntax-highlighted fenced code blocks via `highlight.js`
 - Automatic note titles derived from the first meaningful line
 - Manual title overrides
@@ -74,7 +74,7 @@ Responsibilities:
 - Load the note from storage
 - Initialize the EasyMDE editor
 - Save content and title changes on `visibilitychange` / `beforeunload`
-- Toggle editor and preview modes
+- Toggle Editor and Preview tabs through EasyMDE's native preview mode
 - Export the current note
 - Open the options page
 
