@@ -10,12 +10,19 @@ describe('preview helpers', () => {
   it('renders markdown to HTML', async () => {
     const html = await renderPreview('## Heading\n\n```ts\nconst x = 1;\n```');
     expect(html).toContain('<h2>Heading</h2>');
-    expect(html).toContain('hljs');
+    expect(html).toContain('<pre><code class="hljs language-ts">');
+    expect(html).toContain('hljs-keyword');
   });
 
   it('falls back to auto highlighting for unknown languages', async () => {
     const html = await renderPreview('```unknownlang\nvalue\n```');
-    expect(html).toContain('hljs');
+    expect(html).toContain('<pre><code class="hljs">');
+    expect(html).toContain('value');
+  });
+
+  it('renders fenced code blocks without a language', async () => {
+    const html = await renderPreview('```\nplain text\n```');
+    expect(html).toContain('<pre><code class="hljs">plain text');
   });
 
   it('shows and hides the preview container', () => {

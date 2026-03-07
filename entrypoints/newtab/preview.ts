@@ -1,4 +1,4 @@
-import { marked } from 'marked';
+import { marked, type Tokens } from 'marked';
 import highlight from 'highlight.js';
 import 'highlight.js/styles/github-dark.css'; // We'll let CSS overrides handle light/dark mode
 
@@ -9,20 +9,19 @@ marked.setOptions({
 });
 
 const renderer = new marked.Renderer();
-// Use highlight.js
-renderer.code = ({
-    text,
-    lang
-}: {
-    text: string;
-    lang?: string;
-}) => {
-    const language = highlight.getLanguage(lang || '') ? lang : 'plaintext';
-    if (language) {
-        const validLanguage = highlight.getLanguage(language) ? language : 'plaintext';
-        return `<pre><code class="hljs ${validLanguage}">${highlight.highlight(text, { language: validLanguage }).value}</code></pre>`;
+renderer.code = ({ text, lang }: Tokens.Code) => {
+    const normalizedLanguage = lang?.trim().toLowerCase();
+
+    if (normalizedLanguage && highlight.getLanguage(normalizedLanguage)) {
+        const highlighted = highlight.highlight(text, { language: normalizedLanguage }).value;
+        return `<pre><code class="hljs language-${normalizedLanguage}">${highlighted}</code></pre>`;
     }
-    return `<pre><code class="hljs">${highlight.highlightAuto(text).value}</code></pre>`;
+
+    const highlighted = normalizedLanguage
+        ? highlight.highlightAuto(text).value
+        : highlight.highlight(text, { language: 'plaintext' }).value;
+
+    return `<pre><code class="hljs">${highlighted}</code></pre>`;
 };
 marked.use({ renderer });
 
