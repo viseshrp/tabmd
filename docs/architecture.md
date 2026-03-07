@@ -1,16 +1,25 @@
 # Architecture
 
-## Layout
-- `entrypoints/background`: service worker and browser-action behavior.
-- `entrypoints/tabmd`: main dashboard page.
-- `entrypoints/options`: settings UI.
-- `entrypoints/drive` and `entrypoints/drive-auth`: placeholder future integration surfaces.
-- `entrypoints/shared`: storage, utility, and theme primitives.
-- `entrypoints/ui`: UI helpers such as snackbars.
+TabMD is a local-only Chrome MV3 extension. It uses the `wxt` framework to bundle entrypoints into extension pages.
 
-## Delivery
-- WXT builds the extension.
-- Vitest covers logic and bootstrapping.
-- Playwright loads the packaged extension in Chromium.
-- GitHub Actions handles CI, draft releases, and published release assets.
+## Entrypoints
 
+1. **New Tab Page** (`entrypoints/newtab/index.ts`)
+   The core surface. Overrides Chrome's New Tab page. Instantiates an EasyMDE editor instance and handles interactions like previewing, title overrides, and note saving. Navigates by reading UUIDs from the URL hash.
+
+2. **Popup** (`entrypoints/popup/index.ts`)
+   Provides a quick dropdown listing the 20 most recently modified notes. Reads them completely in-memory upon popup click. Can't write or delete notes — defers editing and deleting actions to dedicated pages.
+
+3. **Full List Page** (`entrypoints/list/index.ts`)
+   An unlisted page designated for browsing all saved notes. Supports case-insensitive searching in O(N*M) linear time. Displays UI cards with snippets.
+
+4. **Options Page** (`entrypoints/options/settings_page.ts`)
+   Handles visual theme preference (OS, Light, Dark mode).
+
+## Data and Persistence
+
+See `storage.md` for a deeper dive into the Chrome storage limits and implementation. All persistence runs through `chrome.storage.local`.
+
+## Interaction Logic
+
+No real-time DOM synchronization across multiple tabs viewing the same note ID. It relies on a "Last Save Wins" heuristic, firing a write event whenever `visibilitychange` evaluates to `hidden` or `beforeunload` is fired.

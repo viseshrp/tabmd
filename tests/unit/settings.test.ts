@@ -9,14 +9,21 @@ describe('storage helpers', () => {
   it('preserves valid settings', () => {
     expect(
       normalizeSettings({
-        theme: 'dark',
-        openInNewTab: false,
-        compactCards: true,
-      }),
+        theme: 'dark'
+      })
     ).toEqual({
-      theme: 'dark',
-      openInNewTab: false,
-      compactCards: true,
+      theme: 'dark'
+    });
+  });
+
+  it('drops unknown keys and sets default for invalid valid keys', () => {
+    expect(
+      normalizeSettings({
+        theme: 'unknown',
+        somethingElse: true
+      })
+    ).toEqual({
+      theme: 'os'
     });
   });
 });

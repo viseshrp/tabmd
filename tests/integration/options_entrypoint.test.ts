@@ -8,16 +8,14 @@ describe('options entrypoint', () => {
     setMockChrome(mock);
 
     document.body.innerHTML = `
-      <input id="openInNewTab" type="checkbox" />
-      <input id="compactCards" type="checkbox" />
-      <input id="themeOs" type="radio" name="theme" value="os" />
-      <input id="themeLight" type="radio" name="theme" value="light" />
-      <input id="themeDark" type="radio" name="theme" value="dark" />
+      <input type="radio" name="theme" value="os" checked />
+      <input type="radio" name="theme" value="light" />
+      <input type="radio" name="theme" value="dark" />
       <div id="snackbar"></div>
     `;
 
-    await import('../../entrypoints/options/index');
+    await import('../../entrypoints/options/settings_page');
 
-    expect(document.querySelector('#openInNewTab')).not.toBeNull();
+    expect(document.querySelector('input[name="theme"]')).not.toBeNull();
   });
 });
