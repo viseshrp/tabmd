@@ -2,6 +2,10 @@ import { listRecentNotes } from "../shared/notes";
 import { resolveNoteTitle } from "../shared/note_title";
 import { readSettings } from "../shared/storage";
 
+// WXT flattens page entrypoints into top-level HTML files in the built extension,
+// so runtime navigation must use `list.html` instead of the source folder path.
+const LIST_PAGE_PATH = "list.html";
+
 async function bootstrap() {
 	const settings = await readSettings();
 	if (settings.theme === "light" || settings.theme === "dark") {
@@ -58,7 +62,7 @@ async function bootstrap() {
 
 	const btnMore = document.getElementById("btn-more");
 	btnMore?.addEventListener("click", () => {
-		chrome.tabs.create({ url: chrome.runtime.getURL("list/index.html") });
+		chrome.tabs.create({ url: chrome.runtime.getURL(LIST_PAGE_PATH) });
 	});
 
 	const btnOptions = document.getElementById("btn-options");
