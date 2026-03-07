@@ -1,13 +1,10 @@
-import { STORAGE_KEYS, type NoteRecord } from "./storage";
+import { normalizeNotesRecord, STORAGE_KEYS, type NoteRecord } from "./storage";
 export type { NoteRecord };
 
 export async function readAllNotes(): Promise<Record<string, NoteRecord>> {
 	const result = await chrome.storage.local.get({ [STORAGE_KEYS.notes]: {} });
-	// Ensure we always return an object even if corrupt data exists
-	const notes = result[STORAGE_KEYS.notes];
-	return notes && typeof notes === "object" && !Array.isArray(notes)
-		? (notes as Record<string, NoteRecord>)
-		: {};
+	// Every read funnels through normalization so callers never need to defend against corrupt storage shapes.
+	return normalizeNotesRecord(result[STORAGE_KEYS.notes]);
 }
 
 export async function readNote(id: string): Promise<NoteRecord | null> {
@@ -19,6 +16,18 @@ export async function writeNote(note: NoteRecord): Promise<void> {
 	const notes = await readAllNotes();
 	notes[note.id] = note;
 	await chrome.storage.local.set({ [STORAGE_KEYS.notes]: notes });
+}
+
+/**
+ * Replaces the entire note dictionary with a normalized snapshot.
+ * Restore flows use this to overwrite local state atomically with backup contents.
+ */
+export async function writeAllNotes(
+	notes: Record<string, NoteRecord>,
+): Promise<Record<string, NoteRecord>> {
+	const normalized = normalizeNotesRecord(notes);
+	await chrome.storage.local.set({ [STORAGE_KEYS.notes]: normalized });
+	return normalized;
 }
 
 export async function deleteNote(id: string): Promise<void> {

@@ -26,3 +26,33 @@ export function logExtensionError(
 export function formatTimestamp(timestamp: number): string {
 	return TIMESTAMP_FORMATTER.format(new Date(timestamp));
 }
+
+/**
+ * Executes async work with a small worker pool so callers can bound concurrency
+ * without falling back to serialized loops or unbounded `Promise.all`.
+ */
+export async function runWithConcurrency<T>(
+	items: readonly T[],
+	limit: number,
+	task: (item: T) => Promise<void>,
+): Promise<void> {
+	if (items.length === 0) {
+		return;
+	}
+
+	const workerCount = Math.max(1, Math.min(Math.floor(limit), items.length));
+	let nextIndex = 0;
+
+	const workers = Array.from({ length: workerCount }, async () => {
+		while (nextIndex < items.length) {
+			const current = items[nextIndex];
+			nextIndex += 1;
+
+			if (current !== undefined) {
+				await task(current);
+			}
+		}
+	});
+
+	await Promise.all(workers);
+}
