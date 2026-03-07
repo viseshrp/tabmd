@@ -13,6 +13,7 @@ This document outlines the testing strategy for the TabMD extension to ensure lo
 | **Notes Storage** | `tests/unit/notes_storage.test.ts` | Operations checking empty states locally and mapping correct `modifiedAt`/`createdAt` chronologies explicitly. |
 | **Blob Export** | `tests/unit/export.test.ts` | File name sanitization over the export sequence via Anchor clicks. |
 | **Runtime Initializations** | `tests/integration/` | Background service loading checks and visual UI rendering configurations. |
+| **Popup Navigation** | `tests/integration/popup_entrypoint.test.ts` | Verifies the recent-notes popup opens the built full-list route (`list.html`) instead of the source entrypoint path. |
 
 ## Running Checks
 

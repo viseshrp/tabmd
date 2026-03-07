@@ -81,6 +81,7 @@ Responsibilities:
 ### Popup
 
 Path: `entrypoints/popup/`
+Runtime page: `popup.html`
 
 Responsibilities:
 
@@ -93,6 +94,7 @@ Responsibilities:
 ### Full list page
 
 Path: `entrypoints/list/`
+Runtime page: `list.html`
 
 Responsibilities:
 
