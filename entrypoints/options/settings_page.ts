@@ -471,15 +471,14 @@ async function initDriveBackupSection(documentRef: Document): Promise<void> {
 				const message = formatDriveAuthError(error, fallback);
 				setDriveStatus(message);
 			} finally {
-				if (
+				const isStaleConnectAttempt =
 					pendingConnectAttemptId !== null &&
-					pendingConnectAttemptId !== connectAttemptId
-				) {
-					return;
-				}
+					pendingConnectAttemptId !== connectAttemptId;
 
-				setBusyReason(null);
-				await refreshAuthState();
+				if (!isStaleConnectAttempt) {
+					setBusyReason(null);
+					await refreshAuthState();
+				}
 			}
 		})();
 	});

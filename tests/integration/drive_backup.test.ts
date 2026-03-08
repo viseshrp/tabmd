@@ -494,16 +494,12 @@ describe("drive backup integration", () => {
 		});
 		setMockChrome(mock);
 
-		let interactiveCallback:
-			| ((tokenResult?: string | { token: string }) => void)
-			| null = null;
 		mock.identity.getAuthToken = (details, callback) => {
 			delete mock.runtime.lastError;
 			if (details.interactive === false) {
 				callback(undefined);
 				return;
 			}
-			interactiveCallback = callback;
 		};
 
 		vi.stubGlobal(
