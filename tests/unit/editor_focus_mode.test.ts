@@ -218,7 +218,29 @@ describe("editor focus mode helpers", () => {
 		expect(previewElement.classList.contains("editor-preview-active")).toBe(
 			false,
 		);
+		expect(
+			previewElement.parentElement?.classList.contains("tabmd-preview-mode"),
+		).toBe(false);
 		expect(mockRefresh).toHaveBeenCalledTimes(1);
+	});
+
+	it("marks the editor wrapper as preview-only while preview is visible", async () => {
+		const { initEditor, showPreview } = await import(
+			"../../entrypoints/newtab/editor"
+		);
+
+		initEditor("# Draft");
+		showPreview();
+
+		const previewElement = document.querySelector(".editor-preview-full");
+		if (!(previewElement instanceof HTMLDivElement)) {
+			throw new Error("Expected EasyMDE preview to be a div.");
+		}
+
+		expect(previewElement.parentElement).not.toBeNull();
+		expect(
+			previewElement.parentElement?.classList.contains("tabmd-preview-mode"),
+		).toBe(true);
 	});
 
 	it("notifies editor change listeners for local edits but not storage-driven updates", async () => {

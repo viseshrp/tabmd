@@ -297,6 +297,11 @@ body.focus-mode-active .EasyMDEContainer .CodeMirror {
   background: transparent;
 }
 
+/* Preview mode should swap surfaces, not stack them, so the editor chrome is fully hidden while preview is active. */
+.EasyMDEContainer .CodeMirror.tabmd-preview-mode > :not(.editor-preview-full) {
+  display: none;
+}
+
 /* EasyMDE owns the preview surface, and these classes keep it visually aligned with the writing canvas. */
 .EasyMDEContainer .tabmd-preview {
   max-width: 880px;

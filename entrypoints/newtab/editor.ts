@@ -4,6 +4,7 @@ import { renderPreview } from "./preview";
 
 const FOCUS_MODE_CLASS = "focus-mode-active";
 const PREVIEW_ACTIVE_CLASS = "editor-preview-active";
+const PREVIEW_MODE_CLASS = "tabmd-preview-mode";
 const PREVIEW_SURFACE_CLASS = "editor-preview-full";
 const PREVIEW_CLASS_NAMES = ["markdown-body", "tabmd-preview"] as const;
 
@@ -67,6 +68,10 @@ function getPreviewElement(): HTMLElement | null {
 	}
 
 	return previewElement;
+}
+
+function getEditorWrapper(): HTMLElement | null {
+	return editorInstance?.codemirror.getWrapperElement() ?? null;
 }
 
 function getOrCreatePreviewElement(): HTMLElement | null {
@@ -215,8 +220,9 @@ export function setPreviewMode(nextActive: boolean): boolean {
 		return false;
 	}
 
+	const editorWrapper = getEditorWrapper();
 	const previewElement = getOrCreatePreviewElement();
-	if (!previewElement) {
+	if (!editorWrapper || !previewElement) {
 		return false;
 	}
 
@@ -232,6 +238,7 @@ export function setPreviewMode(nextActive: boolean): boolean {
 		return previewActive;
 	}
 
+	editorWrapper.classList.toggle(PREVIEW_MODE_CLASS, nextActive);
 	previewElement.classList.toggle(PREVIEW_ACTIVE_CLASS, nextActive);
 	if (nextActive) {
 		previewElement.innerHTML = renderPreview(editorInstance.value());
