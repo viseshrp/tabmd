@@ -60,19 +60,11 @@ export function formatDriveAuthError(
 		return fallbackMessage;
 	}
 
-	const normalized = rawMessage.toLowerCase();
-	if (
-		normalized.includes("did not approve access") ||
-		normalized.includes("did not authorize access") ||
-		normalized.includes("access denied") ||
-		normalized.includes("user canceled") ||
-		normalized.includes("user cancelled") ||
-		normalized.includes("sign in cancelled") ||
-		normalized.includes("sign in canceled")
-	) {
+	if (rawMessage === "The user did not approve access.") {
 		return "Google sign-in was cancelled.";
 	}
 
+	const normalized = rawMessage.toLowerCase();
 	if (!normalized.includes("bad client id")) {
 		return rawMessage;
 	}
