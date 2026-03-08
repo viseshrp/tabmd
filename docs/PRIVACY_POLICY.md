@@ -17,3 +17,4 @@ TabMD stores note data and settings locally in the extension storage area by def
 - Backup files are stored under `tabmd_backups/<install_id>/`.
 - Drive backups are retained according to your configured retention count.
 - TabMD does not transmit note data anywhere else.
+- Drive authentication requires an OAuth client configured for TabMD's own extension ID.

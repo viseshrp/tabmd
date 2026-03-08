@@ -72,8 +72,8 @@ export function formatDriveAuthError(
 	return [
 		"Google Drive OAuth client configuration does not match this extension build.",
 		`Current extension ID: ${extensionId}.`,
-		"This build expects the baked-in OAuth client and manifest key to stay paired.",
-		"Verify the packaged manifest key and OAuth client configuration have not been changed, then rebuild and reload the extension.",
+		"This build now uses an independent manifest key for TabMD.",
+		"Create a Chrome Extension OAuth client for this exact extension ID and replace the baked-in client ID in wxt.config.ts, then rebuild and reload the extension.",
 	].join(" ");
 }
 

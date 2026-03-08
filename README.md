@@ -237,7 +237,11 @@ The extension currently requests:
 - `identity`
 - `https://www.googleapis.com/` host permission
 
-Google Drive backup is manual and optional. This build uses the same fixed OAuth client ID and manifest key pairing as the reference implementation so the extension ID stays stable for Drive auth.
+Google Drive backup is manual and optional. TabMD now uses its own fixed manifest key so it can coexist with `nufftabs` as a separate unpacked extension. The current baked-in OAuth client ID is still the reference one, so Drive auth must be re-provisioned for TabMD's extension ID before authentication will succeed.
+
+Current TabMD extension ID from the baked-in key:
+
+- `npgocjgphlckhehmcghiokimajkmmdef`
 
 ## Google Drive Manual Backup
 

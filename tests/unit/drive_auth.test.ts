@@ -44,8 +44,8 @@ describe("drive auth helpers", () => {
 			"fallback",
 		);
 		expect(message).toContain("extension-123");
-		expect(message).toContain("baked-in OAuth client");
-		expect(message).toContain("manifest key");
+		expect(message).toContain("independent manifest key");
+		expect(message).toContain("wxt.config.ts");
 	});
 
 	it("removes a cached token without throwing", async () => {
