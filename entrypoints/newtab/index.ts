@@ -5,11 +5,13 @@ import {
 	showEditor,
 	setFocusMode,
 	toggleFocusMode,
+	setEditorContent,
+	subscribeToEditorContentChanges,
 } from "./editor";
-import { readNote, type NoteRecord } from "../shared/notes";
+import { readNote, subscribeToNotes, type NoteRecord } from "../shared/notes";
 import { generateUUID } from "../shared/uuid";
-import { initSaveTracking } from "./save";
-import { initTitleActions } from "./title";
+import { initSaveTracking, replaceTrackedNote, saveCurrentNote } from "./save";
+import { applyTitleState, getCommittedTitle, initTitleActions } from "./title";
 import { performExport } from "./export";
 import { readSettings } from "../shared/storage";
 
@@ -56,6 +58,30 @@ async function bootstrap() {
 	initTitleActions(note.title, note.content);
 	initSaveTracking(note);
 
+	// Editor edits must update the derived title before saving so every surface receives the same resolved title state.
+	subscribeToEditorContentChanges((content) => {
+		applyTitleState(getCommittedTitle(), content);
+		void saveCurrentNote();
+	});
+
+	// Title commits are blur-driven, so listening here keeps the save trigger separate from the display logic.
+	document.getElementById("note-title-input")?.addEventListener("blur", () => {
+		void saveCurrentNote();
+	});
+
+	// Storage changes are the cross-surface source of truth for popup, list, and every open editor instance.
+	subscribeToNotes((notes) => {
+		const syncedNote = notes[noteId];
+		if (!syncedNote) {
+			return;
+		}
+
+		note = syncedNote;
+		replaceTrackedNote(syncedNote);
+		applyTitleState(syncedNote.title, syncedNote.content);
+		setEditorContent(syncedNote.content);
+	});
+
 	// 4. Tab switching logic
 	const editorBtn = document.getElementById("tab-editor");
 	const previewBtn = document.getElementById("tab-preview");
@@ -85,16 +111,13 @@ async function bootstrap() {
 
 	const btnExport = document.getElementById("btn-export");
 	btnExport?.addEventListener("click", () => {
-		performExport(note.title, getEditorContent());
+		performExport(getCommittedTitle(), getEditorContent());
 	});
 
 	const btnOptions = document.getElementById("btn-options");
 	btnOptions?.addEventListener("click", () => {
 		chrome.tabs.create({ url: chrome.runtime.getURL("options.html") });
 	});
-
-	// Global editor text-change to update title derivation real-time if needed
-	// But spec says first-line derivation happens on render. We sync on initial render.
 }
 
 bootstrap().catch(console.error);

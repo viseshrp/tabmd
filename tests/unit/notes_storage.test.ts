@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
 	readAllNotes,
 	readNote,
@@ -6,6 +6,9 @@ import {
 	deleteNote,
 	listNotesSorted,
 	listRecentNotes,
+	selectRecentNotes,
+	sortNotesByModifiedDesc,
+	subscribeToNotes,
 } from "../../entrypoints/shared/notes";
 import {
 	STORAGE_KEYS,
@@ -117,6 +120,53 @@ describe("notes storage", () => {
 	it("returns an empty list when the recent note limit is zero or negative", async () => {
 		expect(await listRecentNotes(0)).toEqual([]);
 		expect(await listRecentNotes(-1)).toEqual([]);
+	});
+
+	it("can sort and cap in-memory snapshots for live UI refreshes", () => {
+		const notes: NoteRecord[] = [
+			{ id: "1", content: "", title: null, createdAt: 0, modifiedAt: 10 },
+			{ id: "2", content: "", title: null, createdAt: 0, modifiedAt: 30 },
+			{ id: "3", content: "", title: null, createdAt: 0, modifiedAt: 20 },
+		];
+
+		expect(sortNotesByModifiedDesc(notes).map((note) => note.id)).toEqual([
+			"2",
+			"3",
+			"1",
+		]);
+		expect(selectRecentNotes(notes, 2).map((note) => note.id)).toEqual([
+			"2",
+			"3",
+		]);
+	});
+
+	it("streams normalized note snapshots from storage change events", async () => {
+		const listener = vi.fn();
+		const unsubscribe = subscribeToNotes(listener);
+
+		await chrome.storage.local.set({
+			[STORAGE_KEYS.notes]: {
+				alpha: {
+					id: "ignored-by-normalizer",
+					content: "Body",
+					title: "Alpha",
+					createdAt: 1,
+					modifiedAt: 2,
+				},
+			},
+		});
+
+		expect(listener).toHaveBeenCalledWith({
+			alpha: {
+				id: "alpha",
+				content: "Body",
+				title: "Alpha",
+				createdAt: 1,
+				modifiedAt: 2,
+			},
+		});
+
+		unsubscribe();
 	});
 
 	it("returns safe fallback when storage contains non-object data", async () => {

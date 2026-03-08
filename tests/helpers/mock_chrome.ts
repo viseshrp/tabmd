@@ -27,6 +27,7 @@ export type MockChrome = {
 		};
 		onChanged: {
 			addListener: (listener: StorageListener) => void;
+			removeListener: (listener: StorageListener) => void;
 		};
 	};
 	tabs: {
@@ -132,6 +133,9 @@ export function createMockChrome(options?: {
 			onChanged: {
 				addListener: (listener) => {
 					storageListeners.add(listener);
+				},
+				removeListener: (listener) => {
+					storageListeners.delete(listener);
 				},
 			},
 		},

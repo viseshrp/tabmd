@@ -1,5 +1,6 @@
 import { normalizeNotesRecord, STORAGE_KEYS, type NoteRecord } from "./storage";
 export type { NoteRecord };
+export type NotesListener = (notes: Record<string, NoteRecord>) => void;
 
 export async function readAllNotes(): Promise<Record<string, NoteRecord>> {
 	const result = await chrome.storage.local.get({ [STORAGE_KEYS.notes]: {} });
@@ -39,28 +40,70 @@ export async function deleteNote(id: string): Promise<void> {
 }
 
 export async function listNotesSorted(): Promise<NoteRecord[]> {
-	const notes = await readAllNotes();
-	return Object.values(notes).sort((a, b) => b.modifiedAt - a.modifiedAt);
+	return sortNotesByModifiedDesc(Object.values(await readAllNotes()));
 }
 
 export async function listRecentNotes(limit: number): Promise<NoteRecord[]> {
+	return selectRecentNotes(Object.values(await readAllNotes()), limit);
+}
+
+/**
+ * Returns notes in descending modification order so every UI surface uses the same primary sort semantics.
+ */
+export function sortNotesByModifiedDesc(
+	notes: Iterable<NoteRecord>,
+): NoteRecord[] {
+	return [...notes].sort((a, b) => b.modifiedAt - a.modifiedAt);
+}
+
+/**
+ * Keeps only the most recent `limit` notes without sorting the entire input when callers need a small cap.
+ * Popup refreshes reuse this helper directly on storage snapshots to stay O(n * limit) instead of O(n log n).
+ */
+export function selectRecentNotes(
+	notes: Iterable<NoteRecord>,
+	limit: number,
+): NoteRecord[] {
 	if (limit <= 0) {
 		return [];
 	}
 
-	const notes = Object.values(await readAllNotes());
-	if (notes.length <= limit) {
-		return notes.sort((a, b) => b.modifiedAt - a.modifiedAt);
+	const allNotes = [...notes];
+	if (allNotes.length <= limit) {
+		return sortNotesByModifiedDesc(allNotes);
 	}
 
 	const recentNotes: NoteRecord[] = [];
 
 	// Keep only the top `limit` notes in descending order so the popup avoids sorting the entire library.
-	for (const note of notes) {
+	for (const note of allNotes) {
 		insertRecentNote(recentNotes, note, limit);
 	}
 
 	return recentNotes;
+}
+
+/**
+ * Streams normalized note snapshots to UI surfaces as soon as storage changes land.
+ * Reusing the storage event payload avoids an extra read and keeps popup/list refresh work bounded.
+ */
+export function subscribeToNotes(listener: NotesListener): () => void {
+	const handleStorageChange = (
+		changes: Record<string, chrome.storage.StorageChange>,
+		areaName: string,
+	): void => {
+		if (areaName !== "local" || !(STORAGE_KEYS.notes in changes)) {
+			return;
+		}
+
+		listener(normalizeNotesRecord(changes[STORAGE_KEYS.notes]?.newValue));
+	};
+
+	chrome.storage.onChanged.addListener(handleStorageChange);
+
+	return () => {
+		chrome.storage.onChanged.removeListener(handleStorageChange);
+	};
 }
 
 function insertRecentNote(

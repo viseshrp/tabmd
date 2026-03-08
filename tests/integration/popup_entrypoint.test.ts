@@ -84,6 +84,38 @@ describe("popup entrypoint", () => {
 		expect(document.getElementById("note-list")?.hidden).toBe(true);
 	});
 
+	it("rerenders instantly when note storage changes", async () => {
+		const mock = createMockChrome({
+			initialStorage: {
+				[STORAGE_KEYS.notes]: {
+					alpha: makeNote("alpha", 100),
+				},
+			},
+		});
+		setMockChrome(mock);
+
+		await import("../../entrypoints/popup/index");
+		await flushMicrotasks();
+		expect(document.querySelector(".note-link")?.textContent).toContain(
+			"Note alpha",
+		);
+
+		await mock.storage.local.set({
+			[STORAGE_KEYS.notes]: {
+				alpha: {
+					...makeNote("alpha", 200),
+					title: "Renamed live",
+					content: "# Renamed live\nBody",
+				},
+			},
+		});
+		await flushMicrotasks();
+
+		expect(document.querySelector(".note-link")?.textContent).toBe(
+			"Renamed live",
+		);
+	});
+
 	it("shows an error state when notes fail to load", async () => {
 		const mock = createMockChrome();
 		mock.storage.local.get = async (keys) => {
