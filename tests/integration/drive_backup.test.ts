@@ -486,7 +486,7 @@ describe("drive backup integration", () => {
 		expect(openRestore.disabled).toBe(false);
 	});
 
-	it("refreshes the pending auth status when the page regains focus", async () => {
+	it("ends the pending auth state when the page regains focus without a token", async () => {
 		const mock = createMockChrome({
 			initialStorage: {
 				[STORAGE_KEYS.settings]: { theme: "os" },
@@ -531,7 +531,58 @@ describe("drive backup integration", () => {
 		document.dispatchEvent(new Event("visibilitychange"));
 		await waitForCondition(() =>
 			(getDriveStatus().textContent ?? "").includes(
-				"Waiting for Google sign-in.",
+				"Google sign-in did not finish.",
+			),
+		);
+		expect(openAuth.disabled).toBe(false);
+	});
+
+	it("ignores a stale auth callback after the pending state is abandoned", async () => {
+		const mock = createMockChrome({
+			initialStorage: {
+				[STORAGE_KEYS.settings]: { theme: "os" },
+			},
+		});
+		setMockChrome(mock);
+
+		let interactiveCallback:
+			| ((tokenResult?: string | { token: string }) => void)
+			| null = null;
+		mock.identity.getAuthToken = (details, callback) => {
+			delete mock.runtime.lastError;
+			if (details.interactive === false) {
+				callback(undefined);
+				return;
+			}
+			interactiveCallback = callback;
+		};
+
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(
+				async () =>
+					new Response(JSON.stringify({ files: [] }), { status: 200 }),
+			),
+		);
+
+		mountSettingsDom();
+		await initSettingsPage(document);
+
+		const openAuth =
+			document.querySelector<HTMLButtonElement>("#openDriveAuth");
+		if (!openAuth) {
+			throw new Error("Missing Drive controls");
+		}
+
+		openAuth.click();
+		await waitForCondition(() =>
+			(getDriveStatus().textContent ?? "").includes("Opening Google sign-in."),
+		);
+
+		document.dispatchEvent(new Event("visibilitychange"));
+		await waitForCondition(() =>
+			(getDriveStatus().textContent ?? "").includes(
+				"Google sign-in did not finish.",
 			),
 		);
 
@@ -543,9 +594,54 @@ describe("drive backup integration", () => {
 			tokenResult?: string | { token?: string },
 		) => void;
 		resolveInteractiveAuth("token-connected");
+		await Promise.resolve();
+		await Promise.resolve();
+
+		expect(getDriveStatus().textContent).toContain(
+			"Google sign-in did not finish.",
+		);
+		expect(openAuth.disabled).toBe(false);
+	});
+
+	it("replaces the pending auth state with a cancelled message when the auth flow rejects", async () => {
+		const mock = createMockChrome({
+			initialStorage: {
+				[STORAGE_KEYS.settings]: { theme: "os" },
+			},
+		});
+		setMockChrome(mock);
+
+		mock.identity.getAuthToken = (details, callback) => {
+			if (details.interactive === false) {
+				delete mock.runtime.lastError;
+				callback(undefined);
+				return;
+			}
+			mock.runtime.lastError = { message: "The user did not approve access." };
+			callback(undefined);
+		};
+
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(
+				async () =>
+					new Response(JSON.stringify({ files: [] }), { status: 200 }),
+			),
+		);
+
+		mountSettingsDom();
+		await initSettingsPage(document);
+
+		const openAuth =
+			document.querySelector<HTMLButtonElement>("#openDriveAuth");
+		if (!openAuth) {
+			throw new Error("Missing Drive controls");
+		}
+
+		openAuth.click();
 		await waitForCondition(() =>
 			(getDriveStatus().textContent ?? "").includes(
-				"Connected to Google Drive.",
+				"Google sign-in was cancelled.",
 			),
 		);
 	});

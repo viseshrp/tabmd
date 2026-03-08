@@ -244,10 +244,11 @@ async function initDriveBackupSection(documentRef: Document): Promise<void> {
 	let currentPageBackups: DriveBackupEntry[] = [];
 	let currentPageToken: string | null = null;
 	let nextPageToken: string | null = null;
+	let connectAttemptId = 0;
 	const openingGoogleAuthStatus =
 		"Opening Google sign-in. Finish in the popup to connect.";
-	const waitingForGoogleAuthStatus =
-		"Waiting for Google sign-in. Finish in the popup or close it to cancel.";
+	const unfinishedGoogleAuthStatus =
+		"Google sign-in did not finish. If you closed it, click Connect to try again.";
 
 	// The root page is represented with an empty-string sentinel so backward pagination stays explicit.
 	let previousPageTokens: string[] = [];
@@ -426,11 +427,19 @@ async function initDriveBackupSection(documentRef: Document): Promise<void> {
 
 	openAuthEl.addEventListener("click", () => {
 		void (async () => {
+			let pendingConnectAttemptId: number | null = null;
 			try {
 				if (!isConnected) {
+					pendingConnectAttemptId = ++connectAttemptId;
 					setBusyReason("connecting");
 					setDriveStatus(openingGoogleAuthStatus, false);
-					currentToken = await getAuthToken(true);
+
+					const token = await getAuthToken(true);
+					if (pendingConnectAttemptId !== connectAttemptId) {
+						return;
+					}
+
+					currentToken = token;
 					isConnected = true;
 					setDriveStatus(
 						"Connected to Google Drive. You can back up or restore now.",
@@ -449,12 +458,26 @@ async function initDriveBackupSection(documentRef: Document): Promise<void> {
 					"Disconnected from Google Drive. Connect again to back up or restore.",
 				);
 			} catch (error) {
+				if (
+					pendingConnectAttemptId !== null &&
+					pendingConnectAttemptId !== connectAttemptId
+				) {
+					return;
+				}
+
 				const fallback = isConnected
 					? "Failed to disconnect from Google Drive."
 					: "Failed to connect to Google Drive.";
 				const message = formatDriveAuthError(error, fallback);
 				setDriveStatus(message);
 			} finally {
+				if (
+					pendingConnectAttemptId !== null &&
+					pendingConnectAttemptId !== connectAttemptId
+				) {
+					return;
+				}
+
 				setBusyReason(null);
 				await refreshAuthState();
 			}
@@ -737,10 +760,17 @@ async function initDriveBackupSection(documentRef: Document): Promise<void> {
 
 	const refreshAuthStateOnVisibility = (): void => {
 		void (async () => {
+			if (documentRef.visibilityState === "hidden") {
+				return;
+			}
+
 			await refreshAuthState();
 			if (busyReason !== "connecting") {
 				return;
 			}
+
+			connectAttemptId += 1;
+			setBusyReason(null);
 
 			if (isConnected) {
 				setDriveStatus(
@@ -750,7 +780,7 @@ async function initDriveBackupSection(documentRef: Document): Promise<void> {
 				return;
 			}
 
-			setDriveStatus(waitingForGoogleAuthStatus, false);
+			setDriveStatus(unfinishedGoogleAuthStatus, false);
 		})();
 	};
 

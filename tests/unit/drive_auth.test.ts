@@ -48,6 +48,15 @@ describe("drive auth helpers", () => {
 		expect(message).toContain("wxt.config.ts");
 	});
 
+	it("formats cancelled sign-in errors with a stable user-facing message", () => {
+		expect(
+			formatDriveAuthError(
+				new Error("The user did not approve access."),
+				"fallback",
+			),
+		).toBe("Google sign-in was cancelled.");
+	});
+
 	it("removes a cached token without throwing", async () => {
 		const mock = createMockChrome();
 		let removedToken = "";
