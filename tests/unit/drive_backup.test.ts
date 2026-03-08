@@ -279,6 +279,91 @@ describe("drive backup orchestration", () => {
 		});
 	});
 
+	it("resolves the Drive folder path through the shared root and install subfolder", async () => {
+		const mock = createMockChrome({
+			initialStorage: {
+				[DRIVE_STORAGE_KEYS.installId]: "install-1",
+			},
+		});
+		setMockChrome(mock);
+
+		const folderCalls: Array<{
+			name: string;
+			parentId?: string;
+		}> = [];
+
+		await listDriveBackups("token-1", {
+			getOrCreateFolder: async (
+				name: string,
+				_token: string,
+				parentId?: string,
+			) => {
+				folderCalls.push({ name, parentId });
+				return `${name}-id`;
+			},
+			listFiles: async () => [],
+			listFilesPage: async () => ({ files: [], nextPageToken: null }),
+			uploadJsonFile: async () => {
+				throw new Error("not used");
+			},
+			downloadJsonFile: async () => {
+				throw new Error("not used");
+			},
+			deleteFile: async () => {
+				throw new Error("not used");
+			},
+		});
+
+		expect(folderCalls).toEqual([
+			{ name: "tabmd_backups", parentId: undefined },
+			{ name: "install-1", parentId: "tabmd_backups-id" },
+		]);
+	});
+
+	it("falls back to the full list for the first page when paged Drive listing is unavailable", async () => {
+		const mock = createMockChrome({
+			initialStorage: {
+				[DRIVE_STORAGE_KEYS.installId]: "install-1",
+			},
+		});
+		setMockChrome(mock);
+
+		const page = await listDriveBackupsPage("token-1", undefined, 25, {
+			getOrCreateFolder: async (name: string) => `${name}-id`,
+			listFiles: async () => [
+				{
+					id: "f1",
+					name: "tabmd-backup-z-n5.json",
+					createdTime: "2024-01-01T00:00:00.000Z",
+					size: "42",
+				},
+			],
+		});
+
+		expect(page.backups).toHaveLength(1);
+		expect(page.backups[0]?.fileId).toBe("f1");
+		expect(page.nextPageToken).toBeNull();
+	});
+
+	it("returns an empty page when paged Drive listing is unavailable on later pages", async () => {
+		const mock = createMockChrome({
+			initialStorage: {
+				[DRIVE_STORAGE_KEYS.installId]: "install-1",
+			},
+		});
+		setMockChrome(mock);
+
+		const page = await listDriveBackupsPage("token-1", "token-2", 25, {
+			getOrCreateFolder: async (name: string) => `${name}-id`,
+			listFiles: async () => {
+				throw new Error("not used");
+			},
+		});
+
+		expect(page.backups).toEqual([]);
+		expect(page.nextPageToken).toBeNull();
+	});
+
 	it("uses local backups first and falls back to Drive when the cache is empty", async () => {
 		const localMock = createMockChrome({
 			initialStorage: {
@@ -349,5 +434,47 @@ describe("drive backup orchestration", () => {
 				noteCount: 0,
 			},
 		]);
+	});
+
+	it("returns an empty fallback list when Drive listing fails", async () => {
+		const mock = createMockChrome({
+			initialStorage: {
+				[DRIVE_STORAGE_KEYS.driveBackupIndex]: {
+					installId: "install-1",
+					backups: [],
+				},
+			},
+		});
+		setMockChrome(mock);
+
+		await expect(
+			getBackupsWithFallback("token-1", {
+				getOrCreateFolder: async () => {
+					throw new Error("fail");
+				},
+				listFiles: async () => [],
+				listFilesPage: async () => ({ files: [], nextPageToken: null }),
+				uploadJsonFile: async () => {
+					throw new Error("not used");
+				},
+				downloadJsonFile: async () => {
+					throw new Error("not used");
+				},
+				deleteFile: async () => {
+					throw new Error("not used");
+				},
+			}),
+		).resolves.toEqual([]);
+	});
+
+	it("throws on malformed restore payloads", async () => {
+		const mock = createMockChrome();
+		setMockChrome(mock);
+
+		await expect(
+			restoreFromBackup("file-1", "token-1", {
+				downloadJsonFile: async () => "invalid",
+			}),
+		).rejects.toThrow("Backup payload is not an object.");
 	});
 });
