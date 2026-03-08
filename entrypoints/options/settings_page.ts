@@ -143,16 +143,19 @@ function renderDriveBackups(
 		const actionsCell = document.createElement("td");
 		actionsCell.className = "row-actions";
 
+		// Restore uses the same shared pill-button language as the rest of the options surface.
 		const restoreButton = document.createElement("button");
 		restoreButton.type = "button";
+		restoreButton.className = "drive-btn drive-btn-secondary drive-row-btn";
 		restoreButton.dataset.action = "restore-backup";
 		restoreButton.dataset.fileId = entry.fileId;
 		restoreButton.textContent = "Restore";
 		actionsCell.appendChild(restoreButton);
 
+		// Delete stays visually distinct so destructive actions remain easy to scan in dense tables.
 		const deleteButton = document.createElement("button");
 		deleteButton.type = "button";
-		deleteButton.className = "danger";
+		deleteButton.className = "drive-btn drive-btn-danger drive-row-btn danger";
 		deleteButton.dataset.action = "delete-backup";
 		deleteButton.dataset.fileId = entry.fileId;
 		deleteButton.textContent = "Delete";

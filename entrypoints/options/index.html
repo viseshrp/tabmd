@@ -84,9 +84,27 @@
         </div>
         <div class="panel-body drive-backup-body">
           <div class="drive-controls">
-            <button id="openDriveAuth" type="button">Connect to Google Drive</button>
-            <button id="backupNow" type="button">Backup now</button>
-            <button id="openDriveRestore" type="button">Restore from backup</button>
+            <button
+              id="openDriveAuth"
+              class="drive-btn drive-btn-tonal"
+              type="button"
+            >
+              Connect to Google Drive
+            </button>
+            <button
+              id="backupNow"
+              class="drive-btn drive-btn-primary"
+              type="button"
+            >
+              Backup now
+            </button>
+            <button
+              id="openDriveRestore"
+              class="drive-btn drive-btn-secondary"
+              type="button"
+            >
+              Restore from backup
+            </button>
           </div>
 
           <label class="drive-retention" for="driveRetentionCount">
@@ -123,7 +141,7 @@
       <button
         id="closeDriveRestore"
         type="button"
-        class="drive-restore-close"
+        class="drive-restore-close drive-btn drive-btn-icon"
         aria-label="Close restore dialog"
       >
         &times;
@@ -156,8 +174,20 @@
         </select>
       </label>
       <div class="drive-page-nav">
-        <button id="previousDriveBackupsPage" type="button">Previous</button>
-        <button id="nextDriveBackupsPage" type="button">Next</button>
+        <button
+          id="previousDriveBackupsPage"
+          class="drive-btn drive-btn-secondary"
+          type="button"
+        >
+          Previous
+        </button>
+        <button
+          id="nextDriveBackupsPage"
+          class="drive-btn drive-btn-secondary"
+          type="button"
+        >
+          Next
+        </button>
       </div>
     </div>
   </dialog>
