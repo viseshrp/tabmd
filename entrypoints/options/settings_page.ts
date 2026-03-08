@@ -33,6 +33,10 @@ type DocumentToastNotifierCache = {
 	notifier: UiNotifier;
 };
 
+type StatusOptions = {
+	notify?: boolean;
+};
+
 const toastNotifierByDocument = new WeakMap<
 	Document,
 	DocumentToastNotifierCache
@@ -55,13 +59,17 @@ function resolveDocumentToastNotifier(documentRef: Document): UiNotifier {
 export function setStatus(
 	statusEl: HTMLDivElement | null,
 	message: string,
+	options: StatusOptions = {},
 ): void {
 	const ownerDocument = statusEl?.ownerDocument ?? document;
 	if (statusEl) {
 		statusEl.textContent = message;
 	}
-	const notifier = resolveDocumentToastNotifier(ownerDocument);
-	notifier.notify(message);
+	if (options.notify === false) {
+		return;
+	}
+
+	resolveDocumentToastNotifier(ownerDocument).notify(message);
 }
 
 // Theme changes are reflected on the root element so the shared design tokens update immediately.
@@ -236,6 +244,10 @@ async function initDriveBackupSection(documentRef: Document): Promise<void> {
 	let currentPageBackups: DriveBackupEntry[] = [];
 	let currentPageToken: string | null = null;
 	let nextPageToken: string | null = null;
+	const openingGoogleAuthStatus =
+		"Opening Google sign-in. Finish in the popup to connect.";
+	const waitingForGoogleAuthStatus =
+		"Waiting for Google sign-in. Finish in the popup or close it to cancel.";
 
 	// The root page is represented with an empty-string sentinel so backward pagination stays explicit.
 	let previousPageTokens: string[] = [];
@@ -361,6 +373,10 @@ async function initDriveBackupSection(documentRef: Document): Promise<void> {
 		applyDriveUiState();
 	};
 
+	const setDriveStatus = (message: string, notify = true): void => {
+		setStatus(driveStatusEl, message, { notify });
+	};
+
 	const refreshAuthState = async (): Promise<void> => {
 		const token = await getAuthTokenSilently();
 		currentToken = token;
@@ -381,15 +397,13 @@ async function initDriveBackupSection(documentRef: Document): Promise<void> {
 
 	const setCurrentPageStatus = (): void => {
 		if (currentPageBackups.length === 0) {
-			setStatus(
-				driveStatusEl,
+			setDriveStatus(
 				"No backups found. Create a backup first, then restore it here.",
 			);
 			return;
 		}
 
-		setStatus(
-			driveStatusEl,
+		setDriveStatus(
 			`Showing ${currentPageBackups.length} backup${currentPageBackups.length === 1 ? "" : "s"} on this page.`,
 		);
 	};
@@ -415,11 +429,10 @@ async function initDriveBackupSection(documentRef: Document): Promise<void> {
 			try {
 				if (!isConnected) {
 					setBusyReason("connecting");
-					setStatus(driveStatusEl, "Opening Google authentication...");
+					setDriveStatus(openingGoogleAuthStatus, false);
 					currentToken = await getAuthToken(true);
 					isConnected = true;
-					setStatus(
-						driveStatusEl,
+					setDriveStatus(
 						"Connected to Google Drive. You can back up or restore now.",
 					);
 					return;
@@ -432,8 +445,7 @@ async function initDriveBackupSection(documentRef: Document): Promise<void> {
 				}
 				currentToken = null;
 				isConnected = false;
-				setStatus(
-					driveStatusEl,
+				setDriveStatus(
 					"Disconnected from Google Drive. Connect again to back up or restore.",
 				);
 			} catch (error) {
@@ -441,7 +453,7 @@ async function initDriveBackupSection(documentRef: Document): Promise<void> {
 					? "Failed to disconnect from Google Drive."
 					: "Failed to connect to Google Drive.";
 				const message = formatDriveAuthError(error, fallback);
-				setStatus(driveStatusEl, message);
+				setDriveStatus(message);
 			} finally {
 				setBusyReason(null);
 				await refreshAuthState();
@@ -454,22 +466,21 @@ async function initDriveBackupSection(documentRef: Document): Promise<void> {
 			const normalized = normalizeRetentionCount(Number(retentionEl.value));
 			const saved = await writeRetentionCount(normalized);
 			retentionEl.value = String(saved);
-			setStatus(
-				driveStatusEl,
+			setDriveStatus(
 				`Retention saved: keep latest ${saved} backup${saved === 1 ? "" : "s"}.`,
 			);
 		})().catch((error) => {
 			logExtensionError("Failed to save Drive retention setting", error, {
 				operation: "runtime_context",
 			});
-			setStatus(driveStatusEl, "Failed to save retention setting.");
+			setDriveStatus("Failed to save retention setting.");
 		});
 	});
 
 	backupNowEl.addEventListener("click", () => {
 		void (async () => {
 			setBusyReason("backup");
-			setStatus(driveStatusEl, "Starting backup...");
+			setDriveStatus("Starting backup...", false);
 
 			try {
 				const token = await getAuthToken(true);
@@ -480,7 +491,7 @@ async function initDriveBackupSection(documentRef: Document): Promise<void> {
 				const notes = await readAllNotes();
 				const noteCount = Object.keys(notes).length;
 				if (noteCount === 0) {
-					setStatus(driveStatusEl, "Nothing to backup.");
+					setDriveStatus("Nothing to backup.");
 					return;
 				}
 
@@ -491,13 +502,12 @@ async function initDriveBackupSection(documentRef: Document): Promise<void> {
 					notes,
 				});
 				retentionEl.value = String(retentionCount);
-				setStatus(
-					driveStatusEl,
+				setDriveStatus(
 					`Backup completed. ${backups.length} backup${backups.length === 1 ? "" : "s"} stored.`,
 				);
 			} catch (error) {
 				const message = formatDriveAuthError(error, "Backup failed.");
-				setStatus(driveStatusEl, message);
+				setDriveStatus(message);
 			} finally {
 				setBusyReason(null);
 				await refreshAuthState();
@@ -509,7 +519,7 @@ async function initDriveBackupSection(documentRef: Document): Promise<void> {
 	openRestoreEl.addEventListener("click", () => {
 		void (async () => {
 			setBusyReason("loading_restore_list");
-			setStatus(driveStatusEl, "Loading backups...");
+			setDriveStatus("Loading backups...", false);
 			try {
 				const token = await resolveConnectedToken();
 				const page = await listDriveBackupsPage(
@@ -527,7 +537,7 @@ async function initDriveBackupSection(documentRef: Document): Promise<void> {
 					error,
 					"Failed to load backup list.",
 				);
-				setStatus(driveStatusEl, message);
+				setDriveStatus(message);
 			} finally {
 				setBusyReason(null);
 				await refreshAuthState();
@@ -542,7 +552,7 @@ async function initDriveBackupSection(documentRef: Document): Promise<void> {
 			}
 
 			setBusyReason("loading_more_restore_list");
-			setStatus(driveStatusEl, "Loading next page...");
+			setDriveStatus("Loading next page...", false);
 			try {
 				const token = await resolveConnectedToken();
 				previousPageTokens = [...previousPageTokens, currentPageToken ?? ""];
@@ -559,7 +569,7 @@ async function initDriveBackupSection(documentRef: Document): Promise<void> {
 					error,
 					"Failed to load next page.",
 				);
-				setStatus(driveStatusEl, message);
+				setDriveStatus(message);
 			} finally {
 				setBusyReason(null);
 				applyDriveUiState();
@@ -575,7 +585,7 @@ async function initDriveBackupSection(documentRef: Document): Promise<void> {
 			}
 
 			setBusyReason("loading_more_restore_list");
-			setStatus(driveStatusEl, "Loading previous page...");
+			setDriveStatus("Loading previous page...", false);
 			try {
 				const token = await resolveConnectedToken();
 				const previousPageToken = previousPageTokens.pop() ?? "";
@@ -597,7 +607,7 @@ async function initDriveBackupSection(documentRef: Document): Promise<void> {
 					error,
 					"Failed to load previous page.",
 				);
-				setStatus(driveStatusEl, message);
+				setDriveStatus(message);
 			} finally {
 				setBusyReason(null);
 				applyDriveUiState();
@@ -613,7 +623,7 @@ async function initDriveBackupSection(documentRef: Document): Promise<void> {
 			}
 
 			setBusyReason("loading_restore_list");
-			setStatus(driveStatusEl, "Updating page size...");
+			setDriveStatus("Updating page size...", false);
 			try {
 				await reloadCurrentRestorePageForSelectedSize();
 			} catch (error) {
@@ -621,7 +631,7 @@ async function initDriveBackupSection(documentRef: Document): Promise<void> {
 					error,
 					"Failed to update restore page size.",
 				);
-				setStatus(driveStatusEl, message);
+				setDriveStatus(message);
 			} finally {
 				setBusyReason(null);
 				applyDriveUiState();
@@ -653,7 +663,7 @@ async function initDriveBackupSection(documentRef: Document): Promise<void> {
 		if (button.dataset.action === "restore-backup") {
 			void (async () => {
 				setBusyReason("restore");
-				setStatus(driveStatusEl, "Restoring backup...");
+				setDriveStatus("Restoring backup...", false);
 
 				try {
 					const token = await getAuthToken(true);
@@ -661,13 +671,12 @@ async function initDriveBackupSection(documentRef: Document): Promise<void> {
 					isConnected = true;
 					const restored = await restoreFromBackup(fileId, token);
 					closeRestoreDialog();
-					setStatus(
-						driveStatusEl,
+					setDriveStatus(
 						`Restore completed. ${restored.restoredNotes} note${restored.restoredNotes === 1 ? "" : "s"} restored.`,
 					);
 				} catch (error) {
 					const message = formatDriveAuthError(error, "Restore failed.");
-					setStatus(driveStatusEl, message);
+					setDriveStatus(message);
 				} finally {
 					setBusyReason(null);
 					await refreshAuthState();
@@ -679,7 +688,7 @@ async function initDriveBackupSection(documentRef: Document): Promise<void> {
 		if (button.dataset.action === "delete-backup") {
 			void (async () => {
 				setBusyReason("deleting_backup");
-				setStatus(driveStatusEl, "Deleting backup...");
+				setDriveStatus("Deleting backup...", false);
 
 				try {
 					/**
@@ -694,7 +703,7 @@ async function initDriveBackupSection(documentRef: Document): Promise<void> {
 
 					// If the current page becomes empty, jump back one page so the dialog never strands users on a blank page.
 					if (currentPageBackups.length === 0 && currentPageToken !== null) {
-						setStatus(driveStatusEl, "Loading previous page...");
+						setDriveStatus("Loading previous page...", false);
 						const previousPageToken = previousPageTokens.pop() ?? "";
 						const resolvedPreviousPageToken =
 							previousPageToken.length > 0 ? previousPageToken : undefined;
@@ -716,7 +725,7 @@ async function initDriveBackupSection(documentRef: Document): Promise<void> {
 					setCurrentPageStatus();
 				} catch (error) {
 					const message = formatDriveAuthError(error, "Delete failed.");
-					setStatus(driveStatusEl, message);
+					setDriveStatus(message);
 				} finally {
 					setBusyReason(null);
 					applyDriveUiState();
@@ -727,7 +736,22 @@ async function initDriveBackupSection(documentRef: Document): Promise<void> {
 	});
 
 	const refreshAuthStateOnVisibility = (): void => {
-		void refreshAuthState();
+		void (async () => {
+			await refreshAuthState();
+			if (busyReason !== "connecting") {
+				return;
+			}
+
+			if (isConnected) {
+				setDriveStatus(
+					"Connected to Google Drive. You can back up or restore now.",
+					false,
+				);
+				return;
+			}
+
+			setDriveStatus(waitingForGoogleAuthStatus, false);
+		})();
 	};
 
 	documentRef.addEventListener(
@@ -739,24 +763,21 @@ async function initDriveBackupSection(documentRef: Document): Promise<void> {
 	}
 
 	setBusyReason("loading");
-	setStatus(driveStatusEl, "Checking Google Drive connection...");
+	setDriveStatus("Checking Google Drive connection...", false);
 	previousPageTokens = [];
 	applyRestorePage([], null, null);
 	await refreshAuthState();
 	setBusyReason(null);
 
 	if (!isConnected) {
-		setStatus(
-			driveStatusEl,
+		setDriveStatus(
 			"Not connected. Connect Google Drive to back up or restore.",
+			false,
 		);
 		return;
 	}
 
-	setStatus(
-		driveStatusEl,
-		"Connected to Google Drive. Ready to back up or restore.",
-	);
+	setDriveStatus("Connected to Google Drive. Ready to back up or restore.", false);
 }
 
 /**

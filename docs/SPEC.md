@@ -182,7 +182,7 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
 
 **Constraints:**
 - The popup must load fast. Minimal DOM, no heavy rendering.
-- Limit displayed notes to a reasonable count (e.g., 20 most recent) to keep the popup snappy. The full list page handles the complete set.
+- Limit displayed notes to a reasonable configurable count to keep the popup snappy. The full list page handles the complete set.
 
 ### 6.3 Full List Page
 

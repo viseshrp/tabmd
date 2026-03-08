@@ -567,7 +567,7 @@ tests/
 | EasyMDE CSS conflicts with theme tokens        | Medium     | Override EasyMDE styles with specificity-matched CSS using theme vars |
 | `chrome.storage.local` write contention (two tabs writing same key) | Low | Accept last-write-wins. Document behavior. No locking.              |
 | `beforeunload` handler not reliably saving     | Medium     | Primary save is `visibilitychange`. `beforeunload` is best-effort.  |
-| Large note count slowing popup                 | Low        | Cap popup list to 20 most recent. Full list page handles the rest.  |
+| Large note count slowing popup                 | Low        | Cap popup list to a small configured recent-note limit. Full list page handles the rest.  |
 | `marked` XSS from rendered HTML               | Medium     | Use `marked`'s `sanitize` option or DOMPurify. Verify.              |
 | highlight.js bundle size                       | Low        | Import only common language subsets, not the full bundle.            |
 | EasyMDE preview DOM or focus styling conflicting with page layout | Low | Test preview and focus transitions against the page shell and override styles locally. |

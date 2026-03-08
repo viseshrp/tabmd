@@ -20,11 +20,9 @@ body {
   gap: 32px;
 }
 
-/* The header uses a two-column layout on wide screens so the introduction and summary feel intentionally grouped. */
 .settings-header {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
-  gap: 24px;
+  gap: 12px;
   align-items: start;
 }
 
@@ -55,30 +53,6 @@ body {
   color: var(--md-sys-color-on-surface-variant);
   font-size: 16px;
   line-height: 1.6;
-}
-
-.header-summary {
-  display: grid;
-  gap: 8px;
-  padding: 20px;
-  border: 1px solid rgba(var(--md-sys-color-outline-rgb), 0.2);
-  align-self: stretch;
-}
-
-.summary-label {
-  color: var(--md-sys-color-on-surface-variant);
-  font-size: 13px;
-}
-
-.summary-value {
-  color: var(--md-sys-color-on-surface);
-  font-size: 20px;
-}
-
-.summary-detail {
-  color: var(--md-sys-color-on-surface-variant);
-  font-size: 14px;
-  line-height: 1.5;
 }
 
 .settings-content {

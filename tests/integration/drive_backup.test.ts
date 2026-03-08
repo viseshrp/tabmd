@@ -486,6 +486,67 @@ describe("drive backup integration", () => {
 		expect(openRestore.disabled).toBe(false);
 	});
 
+	it("refreshes the pending auth status when the page regains focus", async () => {
+		const mock = createMockChrome({
+			initialStorage: {
+				[STORAGE_KEYS.settings]: { theme: "os" },
+			},
+		});
+		setMockChrome(mock);
+
+		let interactiveCallback:
+			| ((tokenResult?: string | { token: string }) => void)
+			| null = null;
+		mock.identity.getAuthToken = (details, callback) => {
+			delete mock.runtime.lastError;
+			if (details.interactive === false) {
+				callback(undefined);
+				return;
+			}
+			interactiveCallback = callback;
+		};
+
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(
+				async () =>
+					new Response(JSON.stringify({ files: [] }), { status: 200 }),
+			),
+		);
+
+		mountSettingsDom();
+		await initSettingsPage(document);
+
+		const openAuth =
+			document.querySelector<HTMLButtonElement>("#openDriveAuth");
+		if (!openAuth) {
+			throw new Error("Missing Drive controls");
+		}
+
+		openAuth.click();
+		await waitForCondition(() =>
+			(getDriveStatus().textContent ?? "").includes("Opening Google sign-in."),
+		);
+
+		document.dispatchEvent(new Event("visibilitychange"));
+		await waitForCondition(() =>
+			(getDriveStatus().textContent ?? "").includes(
+				"Waiting for Google sign-in.",
+			),
+		);
+
+		if (!interactiveCallback) {
+			throw new Error("Expected pending interactive auth callback");
+		}
+
+		interactiveCallback("token-connected");
+		await waitForCondition(() =>
+			(getDriveStatus().textContent ?? "").includes(
+				"Connected to Google Drive.",
+			),
+		);
+	});
+
 	it("shows disconnect error messaging and handles visibility refresh events", async () => {
 		const mock = createMockChrome({
 			initialStorage: {

@@ -23,7 +23,7 @@ The current implementation is intentionally narrow:
 - Focus mode that expands the editor to the full workspace while keeping an explicit exit control visible
 - Theme setting with `os`, `light`, and `dark` modes
 - Optional manual Google Drive backup/restore with retention, delete, and restore pagination
-- Recent-notes popup limited to the 20 most recently edited notes
+- Recent-notes popup limited to a small configurable set of the most recently edited notes
 - Full notes page with client-side search across titles and body content
 
 ## Product Model
@@ -103,8 +103,8 @@ Responsibilities:
 
 - Load all notes on popup open
 - Rerender when note storage changes while the popup is open
-- Select the 20 most recent notes without fully sorting the complete collection
-- Render the 20 most recent notes
+- Select the configured recent-notes popup cap without fully sorting the complete collection
+- Render the configured recent-notes popup cap
 - Open the selected note in a new tab
 - Navigate to the full list page or options page
 

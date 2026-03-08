@@ -6,11 +6,11 @@ import {
 } from "../shared/notes";
 import { resolveNoteTitle } from "../shared/note_title";
 import { readSettings } from "../shared/storage";
+import { POPUP_RECENT_NOTES_LIMIT } from "../shared/ui_limits";
 
 // WXT flattens page entrypoints into top-level HTML files in the built extension,
 // so runtime navigation must use `list.html` instead of the source folder path.
 const LIST_PAGE_PATH = "list.html";
-const POPUP_NOTE_LIMIT = 20;
 
 function renderNotes(notes: NoteRecord[]): void {
 	const listContainer = document.getElementById(
@@ -28,7 +28,7 @@ function renderNotes(notes: NoteRecord[]): void {
 	emptyState.hidden = true;
 	listContainer.hidden = false;
 
-	// The popup is capped at 20 notes, so rebuilding the fragment is small and keeps DOM updates straightforward.
+	// The popup stays bounded by a shared recent-note limit, so rebuilding the fragment is small and keeps DOM updates straightforward.
 	const notesFragment = document.createDocumentFragment();
 
 	for (const note of notes) {
@@ -65,7 +65,7 @@ async function bootstrap() {
 	}
 
 	try {
-		renderNotes(await listRecentNotes(POPUP_NOTE_LIMIT));
+		renderNotes(await listRecentNotes(POPUP_RECENT_NOTES_LIMIT));
 	} catch (_error) {
 		const listContainer = document.getElementById(
 			"note-list",
@@ -78,7 +78,9 @@ async function bootstrap() {
 
 	// Storage events already carry the full notes map, so popup refreshes stay incremental without another read.
 	subscribeToNotes((notes) => {
-		renderNotes(selectRecentNotes(Object.values(notes), POPUP_NOTE_LIMIT));
+		renderNotes(
+			selectRecentNotes(Object.values(notes), POPUP_RECENT_NOTES_LIMIT),
+		);
 	});
 
 	const btnMore = document.getElementById("btn-more");
