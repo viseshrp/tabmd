@@ -3,7 +3,7 @@ import { defineConfig } from "wxt";
 const manifestVersion =
 	process.env.RELEASE_VERSION ?? process.env.npm_package_version ?? "1.0.0";
 const oauthClientId =
-	"316914322209-3tclnhiqvs72o6807749be29llob6sgo.apps.googleusercontent.com";
+	"316914322209-l8uh5oeed3haj3khhtvs93tqvn9qmrj7.apps.googleusercontent.com";
 const extensionKey =
 	"MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA+Uz8HlKJsZ6KSvl6pfVu7rhXWtoRww+gdeEv78jNuEkYuBuZ83n4DzXg/tZqoE5NtFfm/kLkThVM3D3+JK41yDMAbtQA7zoGSbzxhb1UakI7Rt1t8hTVYl2a+hJ0wfWRVUgckkYj5xostHa+F6fkJ3d5F6v7ZXISSa0EQstgLNwiQyLRp0gc0Rq/ksPyaHEVulg9OIVfGhY0+EBzVnyatq3H6d1/dGd6Fgdli5FmbsVzmsPPO0sds/ozyYo0+MK71yP38cgBq/70CBKDzobxYRl8Ikaaywzjl/7PZmtHjXQEeZSZJJ0WNGyyu5hUIgzXyNl8GXZCGE8P6llojhfO5QIDAQAB";
 
