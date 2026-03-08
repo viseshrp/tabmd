@@ -41,7 +41,7 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
 1. **Writing-first.** The editor occupies the full page. Chrome and controls fade into the background.
 2. **Instant.** A new tab must feel as fast as Chrome's default. No loading spinners, no splash screens.
 3. **Minimal.** Every visible element must serve the writing or note-management workflow. No decorative chrome.
-4. **Predictable.** Notes save automatically on blur. Titles derive automatically. The user never thinks about persistence.
+4. **Predictable.** Notes save automatically as edits happen. Titles derive automatically. The user never thinks about persistence.
 5. **Local-first.** Data stays in the browser unless the user explicitly runs a manual Google Drive backup or restore action.
 
 ---
@@ -55,14 +55,14 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
 3. A new note ID is generated and placed in the URL hash (e.g., `newtab.html#abc123`).
 4. The EasyMDE editor renders with autofocus and the placeholder "Start writing…".
 5. The user types. The placeholder disappears on first input.
-6. When the user navigates away or the tab loses focus, the note is saved.
+6. As the user types, the note is persisted and other open TabMD surfaces reflect the latest title/content.
 
 ### 5.2 Resume an Existing Note
 
 1. User clicks a note card in the popup, full list page, or any other link containing the note's hash.
 2. A new tab opens with `newtab.html#<noteId>`.
 3. The editor loads the saved content for that note ID.
-4. The user edits. Note saves on blur.
+4. The user edits. Note changes persist immediately and other open TabMD surfaces reflect them.
 
 ### 5.3 Preview a Note
 
@@ -148,7 +148,7 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
   - If hash ID is not found in storage: treat as a new note with that ID.
 - EasyMDE autofocuses on load.
 - Placeholder "Start writing…" shows in empty editor; disappears on first input.
-- Note saves when the page/tab loses focus (`visibilitychange` event, `beforeunload` event).
+- Note saves as editor content and title changes happen, with `beforeunload` retained as a best-effort fallback.
 - Title area:
   - If no manual title is set, display the first-line-derived title (see §7.4).
   - If manual title is set, display the manual title.
@@ -263,7 +263,7 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
   - `title`: `null` (triggers first-line fallback).
   - `createdAt`: current timestamp.
   - `modifiedAt`: current timestamp.
-- The note is saved to storage on first blur — blank notes are persisted.
+- The note is saved to storage on the first actual content or title change.
 
 ### 7.2 Opening Existing Notes
 
@@ -297,12 +297,13 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
 **Rename from full list page:**
 - Rename action sets the `title` field in the note record, same as manual title override.
 
-### 7.5 Save-on-Blur
+### 7.5 Real-Time Save Behavior
 
-- The note saves when the page loses visibility (`document.visibilitychange` with `document.visibilityState === 'hidden'`).
-- Also save on `beforeunload` as a safety net.
-- Save writes the current editor content and updated `modifiedAt` to storage.
-- If the content has not changed since the last save, skip the write.
+- The note saves when editor content changes or when the title commit completes.
+- Also save on `beforeunload` as a best-effort safety net.
+- Save writes the current editor content, title, and updated `modifiedAt` to storage.
+- If the content and title have not changed since the last save, skip the write.
+- Popup and full-list surfaces subscribe to storage changes so open UI stays synchronized without timers.
 - No periodic autosave timer. No save button. No debounced save.
 
 ### 7.6 Preview Rendering
@@ -420,7 +421,7 @@ Notes are stored as an object keyed by note ID for O(1) lookup.
 | Very large note content                         | `unlimitedStorage` permission handles this. No content size limit enforced by the extension.  |
 | Note with only whitespace content               | Auto-title shows "Untitled". Content is preserved as-is.                                     |
 | Title field receives only whitespace             | Treated as empty → revert to auto-title (`title` set to `null`).                            |
-| Browser crash during editing                    | Data since last blur is lost. Accepted trade-off for simplicity.                             |
+| Browser crash during editing                    | Data since the last successful real-time write is lost. `beforeunload` remains best-effort. |
 | Storage quota exceeded despite unlimitedStorage  | Log error via `logExtensionError`. Show snackbar: "Failed to save. Storage may be full."     |
 
 ### 9.3 Error / Fallback Expectations

@@ -81,7 +81,7 @@ These files exist in the current scaffold but are not needed for TabMD:
 | `entrypoints/newtab/index.html`             | New tab page HTML shell                               |
 | `entrypoints/newtab/index.ts`               | New tab page init: editor, save, title, preview       |
 | `entrypoints/newtab/editor.ts`              | EasyMDE setup, configuration, focus mode, native preview state |
-| `entrypoints/newtab/save.ts`                | Save-on-blur logic                                    |
+| `entrypoints/newtab/save.ts`                | Real-time save tracking and lifecycle fallback        |
 | `entrypoints/newtab/title.ts`               | Title derivation and manual override logic            |
 | `entrypoints/newtab/preview.ts`             | Preview rendering (Markdown → HTML) used by EasyMDE preview hooks |
 | `entrypoints/newtab/export.ts`              | Export current note as .md                            |
@@ -173,7 +173,7 @@ Use `crypto.randomUUID()` — available in all modern Chrome versions. No librar
 2. If empty:
    - Generate UUID via `crypto.randomUUID()`.
    - Set hash via `history.replaceState(null, '', '#' + id)` — avoids pushing a history entry.
-   - Initialize an empty `NoteRecord` (not yet written to storage — written on first blur).
+   - Initialize an empty `NoteRecord` (not yet written to storage — written on first actual edit).
 3. If non-empty:
    - Attempt to load `NoteRecord` from storage.
    - If found: populate editor with `content`.
@@ -196,18 +196,21 @@ This ensures the newtab entrypoint loads with the correct hash.
 ### 6.1 New Tab Page → Storage
 
 - Reads note on load.
-- Writes note on blur / beforeunload.
-- No real-time sync between multiple open tabs of the same note (last write wins).
+- Writes note immediately on editor and title changes, with `beforeunload` retained as a best-effort fallback.
+- Subscribes to `chrome.storage.onChanged` so other open surfaces reflect title and content edits immediately.
+- Multiple tabs pointed at the same note still use last-write-wins behavior.
 
 ### 6.2 Popup → Storage
 
 - Reads all notes on popup open.
+- Subscribes to `chrome.storage.onChanged` for live rerenders while the popup stays open.
 - Navigates by creating new tabs with hash URLs.
 - Never writes to storage.
 
 ### 6.3 Full List Page → Storage
 
 - Reads all notes on load.
+- Subscribes to `chrome.storage.onChanged` for live rerenders while the page stays open.
 - Writes on rename (updates `title` field).
 - Writes on delete (removes note).
 - Navigates by creating new tabs.
@@ -350,19 +353,20 @@ This utility is used by: newtab page (title area), popup (note list), full list 
 
 ---
 
-## 11. Save-on-Blur
+## 11. Real-Time Save Tracking
 
 ### 11.1 Implementation (`entrypoints/newtab/save.ts`)
 
 1. Track `lastSavedContent` — initialized from the loaded note's content (or empty string for new notes).
-2. Listen to `document.addEventListener('visibilitychange', ...)`.
-3. When `document.visibilityState === 'hidden'`:
+2. Listen to editor-content and title-commit events.
+3. Serialize saves so only one `chrome.storage.local.set` runs at a time.
+4. For each save attempt:
    - Read current content from EasyMDE: `easymde.value()`.
-   - If content === `lastSavedContent`, skip (no-op).
+   - If content and title both match the last saved snapshot, skip (no-op).
    - Otherwise, call `writeNote({ ...note, content, modifiedAt: Date.now() })`.
-   - Update `lastSavedContent`.
-4. Also listen to `window.addEventListener('beforeunload', ...)` as a safety net.
-   - Same logic, but use synchronous-compatible approach (storage write is async; `beforeunload` may not wait for it — this is a best-effort safety net, not a guarantee).
+   - Update the tracked saved snapshot.
+5. Also listen to `window.addEventListener('beforeunload', ...)` as a safety net.
+   - This is still best-effort because the browser may not await the async storage write.
 
 ### 11.2 No Autosave Timer
 
@@ -428,7 +432,7 @@ This is the same Blob + anchor pattern used in the existing scaffold's `exportJs
 1. Create `entrypoints/newtab/index.html` with HTML shell (title area, tab bar, editor container, toolbar).
 2. Install `easymde` dependency.
 3. Create `entrypoints/newtab/editor.ts` — EasyMDE initialization and configuration.
-4. Create `entrypoints/newtab/save.ts` — save-on-blur logic.
+4. Create `entrypoints/newtab/save.ts` — real-time save tracking logic.
 5. Create `entrypoints/newtab/title.ts` — title area UI behavior (show/hide, derive/override).
 6. Create `entrypoints/newtab/index.ts` — page init, hash routing, wiring.
 7. Create `entrypoints/newtab/style.css` — page styles using theme tokens.
@@ -494,7 +498,7 @@ tests/
     note_title.test.ts         # Title derivation
     uuid.test.ts               # UUID generation
     search.test.ts             # Search/filter logic
-    save_logic.test.ts         # Save-on-blur logic
+    save_logic.test.ts         # Real-time save tracking logic
     export.test.ts             # Export filename sanitization
     settings.test.ts           # Settings normalization
     ui_notifications.test.ts   # Snackbar notifier (existing)

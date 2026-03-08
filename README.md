@@ -8,7 +8,7 @@ The current implementation is intentionally narrow:
 - No automatic sync or background upload
 - Optional manual Google Drive backup/restore
 - One note per tab
-- Save on tab blur / page hide
+- Real-time local note persistence across open UI surfaces
 - Popup for recent notes
 - Full list page for search, rename, and delete
 
@@ -88,7 +88,8 @@ Responsibilities:
 - Resolve or create the current note ID from `location.hash`
 - Load the note from storage
 - Initialize the EasyMDE editor
-- Save content and title changes on `visibilitychange` / `beforeunload`
+- Save content and title changes immediately on editor or title edits
+- Reconcile with `chrome.storage.onChanged` so open surfaces stay in sync
 - Toggle Editor and Preview tabs through EasyMDE's native preview mode
 - Export the current note
 - Open the options page
@@ -101,6 +102,7 @@ Runtime page: `popup.html`
 Responsibilities:
 
 - Load all notes on popup open
+- Rerender when note storage changes while the popup is open
 - Select the 20 most recent notes without fully sorting the complete collection
 - Render the 20 most recent notes
 - Open the selected note in a new tab
@@ -114,6 +116,7 @@ Runtime page: `list.html`
 Responsibilities:
 
 - Load and sort all notes
+- Rerender when note storage changes while the list page is open
 - Search across derived titles and note content using cached normalized metadata per page load
 - Show a snippet for each matching note
 - Rename notes
@@ -265,7 +268,7 @@ Current TabMD extension ID from the baked-in key:
 
 ## Known Constraints
 
-- Save behavior is blur-driven, not per-keystroke.
+- Open TabMD surfaces reflect title and content updates as soon as the note is persisted.
 - Multiple tabs pointed at the same note use last-write-wins behavior.
 - Search is client-side over the in-memory note list loaded for the page.
 - Notes are local to the browser profile unless you explicitly run a manual Drive backup.

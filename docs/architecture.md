@@ -25,4 +25,4 @@ See `storage.md` for a deeper dive into the Chrome storage limits and implementa
 
 ## Interaction Logic
 
-No real-time DOM synchronization across multiple tabs viewing the same note ID. It relies on a "Last Save Wins" heuristic, firing a write event whenever `visibilitychange` evaluates to `hidden` or `beforeunload` is fired. The save path skips writes when neither the editor content nor the manual title changed since the last successful persistence call.
+Open TabMD surfaces synchronize through `chrome.storage.local`. The new-tab editor writes title and content changes immediately, popup/list surfaces subscribe to `chrome.storage.onChanged`, and all pages still follow a last-write-wins model when two surfaces edit the same note concurrently. The save path skips exact no-op writes and serializes storage updates so overlapping writes do not race each other.
