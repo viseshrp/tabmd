@@ -230,7 +230,7 @@ describe("drive backup integration", () => {
 		);
 
 		const uploadCalls = fetchMock.mock.calls.filter((call) =>
-			String(call[0] ?? "").includes("/upload/drive/v3/files"),
+			String(call.at(0) ?? "").includes("/upload/drive/v3/files"),
 		);
 		expect(uploadCalls).toHaveLength(0);
 	});
@@ -742,7 +742,7 @@ describe("drive backup integration", () => {
 		expect(nextPage.disabled).toBe(false);
 
 		const initialListCalls = fetchMock.mock.calls.filter((call) => {
-			const url = String(call[0]);
+			const url = String(call.at(0) ?? "");
 			return url.includes("/drive/v3/files?") && !url.includes("mimeType");
 		});
 		expect(initialListCalls).toHaveLength(1);
@@ -773,7 +773,7 @@ describe("drive backup integration", () => {
 		expect(nextPage.disabled).toBe(false);
 
 		const downloadCalls = fetchMock.mock.calls.filter((call) =>
-			String(call[0]).includes("alt=media"),
+			String(call.at(0) ?? "").includes("alt=media"),
 		);
 		expect(downloadCalls).toHaveLength(0);
 	});
@@ -952,7 +952,7 @@ describe("drive backup integration", () => {
 		deleteButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
 		await waitForCondition(() =>
 			fetchMock.mock.calls.some((call) => {
-				const url = String(call[0]);
+				const url = String(call.at(0) ?? "");
 				const init = call[1] as RequestInit | undefined;
 				return (
 					url.includes("/drive/v3/files/f1") &&
@@ -962,7 +962,7 @@ describe("drive backup integration", () => {
 		);
 
 		const downloadCalls = fetchMock.mock.calls.filter((call) =>
-			String(call[0]).includes("alt=media"),
+			String(call.at(0) ?? "").includes("alt=media"),
 		);
 		expect(downloadCalls).toHaveLength(0);
 	});
