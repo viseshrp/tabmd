@@ -539,7 +539,10 @@ describe("drive backup integration", () => {
 			throw new Error("Expected pending interactive auth callback");
 		}
 
-		interactiveCallback("token-connected");
+		const resolveInteractiveAuth = interactiveCallback as (
+			tokenResult?: string | { token?: string },
+		) => void;
+		resolveInteractiveAuth("token-connected");
 		await waitForCondition(() =>
 			(getDriveStatus().textContent ?? "").includes(
 				"Connected to Google Drive.",
