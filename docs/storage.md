@@ -45,6 +45,8 @@ export type TabmdSettings = {
 
 These keys support the manual Google Drive backup feature in the options page. They are local cache/settings only; the backup file contents themselves live in the user's Google Drive.
 
+The `installId` is a stable per-install identifier. It is used to separate multiple TabMD installs in Drive so each one writes into its own subfolder instead of sharing one flat file list.
+
 ```typescript
 type DriveBackupEntry = {
   fileId: string;
@@ -60,6 +62,12 @@ type DriveBackupIndex = {
 };
 ```
 
+Remote Drive folder layout:
+
+```text
+tabmd_backups/<installId>/
+```
+
 ### Drive Backup Payload
 
 Each uploaded Drive backup stores a full snapshot of notes:
@@ -72,3 +80,5 @@ type SerializedBackupPayload = {
   notes: Record<string, NoteRecord>;
 };
 ```
+
+The options-page restore dialog uses the cached `DriveBackupIndex` for quick local metadata reads when available, but the live restore list is fetched lazily from Drive with explicit pagination controls, delete actions, and on-demand restore downloads.

@@ -14,10 +14,10 @@ TabMD is a local-first Chrome MV3 extension. It uses the `wxt` framework to bund
    An unlisted page designated for browsing all saved notes. Builds a normalized search index once per load so each query only performs containment checks and snippet extraction over the cached note set. Displays UI cards with snippets. The built extension serves this entrypoint as `list.html`, which is the URL popup navigation must open.
 
 4. **Options Page** (`entrypoints/options/settings_page.ts`)
-   Handles visual theme preference (OS, Light, Dark mode) plus optional Google Drive connect/backup/restore actions.
+   Handles visual theme preference (OS, Light, Dark mode) plus optional Google Drive connect/backup/restore actions. The restore list is loaded lazily into a dialog so the page avoids Drive network work until the user explicitly asks for backup history.
 
 5. **Drive Backup Modules** (`entrypoints/drive/`)
-   Wrap `chrome.identity`, call the Google Drive REST API, serialize note snapshots, enforce retention, and restore backups into local storage.
+   Wrap `chrome.identity`, call the Google Drive REST API, serialize note snapshots, enforce retention, maintain a local backup-index cache, and restore backups into local storage. Backup files are separated per extension install under `tabmd_backups/<installId>/`.
 
 ## Data and Persistence
 

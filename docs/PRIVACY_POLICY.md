@@ -15,6 +15,7 @@ TabMD stores note data and settings locally in the extension storage area by def
 ## Optional Google Drive backup
 - When you choose to use Drive backup, TabMD uploads a JSON snapshot containing your notes to your own Google Drive.
 - Backup files are stored under `tabmd_backups/<install_id>/`.
+- Each extension install gets its own `install_id` subfolder so multiple TabMD installs stay separated in Drive.
 - Drive backups are retained according to your configured retention count.
 - TabMD does not transmit note data anywhere else.
 - Drive authentication requires an OAuth client configured for TabMD's own extension ID.

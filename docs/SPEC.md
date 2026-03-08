@@ -112,14 +112,17 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
 3. Sets a retention count.
 4. Clicks "Backup now".
 5. TabMD uploads a JSON snapshot containing all notes into the user's Drive account.
+6. Backup files are stored under the install-specific Drive path `tabmd_backups/<installId>/`.
 
 ### 5.10 Restore from Google Drive
 
 1. User opens the options page.
 2. Clicks "Restore from backup".
 3. TabMD loads one page of backup metadata from Google Drive.
-4. User selects a backup row and confirms restore.
-5. The selected snapshot overwrites local notes.
+4. The restore dialog exposes explicit page-size, previous, and next controls.
+5. User selects a backup row and confirms restore.
+6. The selected snapshot overwrites local notes.
+7. User may also delete an individual Drive backup row without restoring it.
 
 ---
 
@@ -230,7 +233,7 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
   - Backup-now button.
   - Restore dialog opener.
   - Retention number input.
-  - Restore dialog with backup table and explicit pagination controls.
+  - Restore dialog with backup table, delete/restore row actions, and explicit pagination controls.
 
 **Behavior:**
 - On load, read current settings from storage and populate controls.
@@ -239,7 +242,9 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
 - Theme changes apply immediately to the options page itself.
 - Drive auth status is checked non-interactively on load.
 - Drive backup uploads all notes.
+- Restore-list metadata is loaded lazily only when the user opens the restore dialog.
 - Restore replaces local notes with the selected backup payload.
+- Delete removes only the selected Drive backup file.
 - The baked-in manifest key gives TabMD its own stable extension ID, so the OAuth client must be configured for that specific ID.
 - Reachable from: popup, full list page, new tab editor page.
 

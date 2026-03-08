@@ -22,7 +22,7 @@ The current implementation is intentionally narrow:
 - Export current note as a `.md` file
 - Focus mode that expands the editor to the full workspace while keeping an explicit exit control visible
 - Theme setting with `os`, `light`, and `dark` modes
-- Optional manual Google Drive backup/restore with retention and restore pagination
+- Optional manual Google Drive backup/restore with retention, delete, and restore pagination
 - Recent-notes popup limited to the 20 most recently edited notes
 - Full notes page with client-side search across titles and body content
 
@@ -68,6 +68,14 @@ type NoteRecord = {
 ```
 
 That shape keeps note load, upsert, and delete operations simple and effectively constant-time by note ID.
+
+Drive backups stay isolated per extension install. Each install gets a stable local `installId`, and Drive files are written under:
+
+```text
+tabmd_backups/<installId>/
+```
+
+That separation lets multiple TabMD installs coexist without mixing backup files in the same Drive folder.
 
 ## Runtime Surfaces
 
@@ -123,7 +131,9 @@ Responsibilities:
 - Show a snackbar after saves
 - Connect/disconnect Google Drive for manual backups
 - Upload note snapshots to Drive and restore them on demand
-- Manage retention and restore-dialog pagination
+- Load the restore list lazily into a dialog
+- Delete individual Drive backups from that dialog
+- Manage retention and explicit restore-dialog pagination
 
 ### Background service worker
 
@@ -249,7 +259,9 @@ Current TabMD extension ID from the baked-in key:
 2. Click `Connect to Google Drive` and approve access.
 3. Set `Retention` to the number of backups you want to keep.
 4. Click `Backup now` to upload all notes.
-5. Click `Restore from backup` to browse Drive snapshots and restore one into local storage.
+5. Click `Restore from backup` to browse Drive snapshots lazily in the restore dialog.
+6. Use `Previous`, `Next`, and the page-size selector to page through backups.
+7. Click `Restore` to overwrite local notes with the selected snapshot, or `Delete` to remove a Drive backup file without restoring it.
 
 ## Known Constraints
 
@@ -257,6 +269,7 @@ Current TabMD extension ID from the baked-in key:
 - Multiple tabs pointed at the same note use last-write-wins behavior.
 - Search is client-side over the in-memory note list loaded for the page.
 - Notes are local to the browser profile unless you explicitly run a manual Drive backup.
+- Drive backup is manual only. It is not sync, merge, or background replication.
 
 ## Related Docs
 
