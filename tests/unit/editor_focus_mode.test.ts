@@ -14,11 +14,16 @@ class MockEasyMDE {
 	codemirror = {
 		focus: mockFocus,
 		getWrapperElement: () => this.wrapperElement,
+		on: (eventName: string, handler: () => void) => {
+			if (eventName === "change") {
+				this.changeListeners.add(handler);
+			}
+		},
 		refresh: mockRefresh,
 	};
 
+	private readonly changeListeners = new Set<() => void>();
 	private currentValue: string;
-	private previewActive = false;
 	private readonly previewElement: HTMLDivElement;
 	private readonly wrapperElement: HTMLDivElement;
 
@@ -45,6 +50,9 @@ class MockEasyMDE {
 	value(nextValue?: string): string | undefined {
 		if (typeof nextValue === "string") {
 			this.currentValue = nextValue;
+			for (const listener of this.changeListeners) {
+				listener();
+			}
 			return;
 		}
 
@@ -52,17 +60,19 @@ class MockEasyMDE {
 	}
 
 	isPreviewActive(): boolean {
-		return this.previewActive;
+		return this.previewElement.classList.contains("editor-preview-active");
 	}
 
 	static togglePreview(editor: MockEasyMDE): void {
-		editor.previewActive = !editor.previewActive;
+		const previewActive = !editor.previewElement.classList.contains(
+			"editor-preview-active",
+		);
 		editor.previewElement.classList.toggle(
 			"editor-preview-active",
-			editor.previewActive,
+			previewActive,
 		);
 
-		if (!editor.previewActive || !editor.options.previewRender) {
+		if (!previewActive || !editor.options.previewRender) {
 			return;
 		}
 
@@ -187,5 +197,43 @@ describe("editor focus mode helpers", () => {
 		showPreview();
 
 		expect(previewElement.innerHTML).toContain("<h1>First</h1>");
+	});
+
+	it("removes the preview overlay as soon as the editor tab becomes active again", async () => {
+		const { initEditor, showEditor, showPreview } = await import(
+			"../../entrypoints/newtab/editor"
+		);
+
+		initEditor("# Draft");
+		showPreview();
+		mockRefresh.mockReset();
+
+		showEditor();
+
+		const previewElement = document.querySelector(".editor-preview-full");
+		if (!(previewElement instanceof HTMLDivElement)) {
+			throw new Error("Expected EasyMDE preview to be a div.");
+		}
+
+		expect(previewElement.classList.contains("editor-preview-active")).toBe(
+			false,
+		);
+		expect(mockRefresh).toHaveBeenCalledTimes(1);
+	});
+
+	it("notifies editor change listeners for local edits but not storage-driven updates", async () => {
+		const { initEditor, setEditorContent, subscribeToEditorContentChanges } =
+			await import("../../entrypoints/newtab/editor");
+		const contentListener = vi.fn();
+
+		const editor = initEditor("Initial");
+		subscribeToEditorContentChanges(contentListener);
+
+		setEditorContent("Synced from storage");
+		expect(contentListener).not.toHaveBeenCalled();
+
+		editor.value("Typed locally");
+
+		expect(contentListener).toHaveBeenCalledWith("Typed locally");
 	});
 });

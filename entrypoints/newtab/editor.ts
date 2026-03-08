@@ -3,12 +3,16 @@ import "easymde/dist/easymde.min.css";
 import { renderPreview } from "./preview";
 
 const FOCUS_MODE_CLASS = "focus-mode-active";
+const PREVIEW_ACTIVE_CLASS = "editor-preview-active";
+const PREVIEW_SURFACE_CLASS = "editor-preview-full";
 const PREVIEW_CLASS_NAMES = ["markdown-body", "tabmd-preview"] as const;
 
 let editorInstance: EasyMDE | null = null;
 let container: HTMLElement | null = null;
 let focusModeActive = false;
 let escapeHandlerRegistered = false;
+const contentChangeListeners = new Set<(content: string) => void>();
+let applyingExternalContent = false;
 
 function syncFocusModeUi(isActive: boolean): void {
 	document.body.classList.toggle(FOCUS_MODE_CLASS, isActive);
@@ -57,7 +61,7 @@ function getPreviewElement(): HTMLElement | null {
 		editorInstance.codemirror.getWrapperElement().lastElementChild;
 	if (
 		!(previewElement instanceof HTMLElement) ||
-		!previewElement.classList.contains("editor-preview-full")
+		!previewElement.classList.contains(PREVIEW_SURFACE_CLASS)
 	) {
 		return null;
 	}
@@ -65,8 +69,30 @@ function getPreviewElement(): HTMLElement | null {
 	return previewElement;
 }
 
+function getOrCreatePreviewElement(): HTMLElement | null {
+	if (!editorInstance) {
+		return null;
+	}
+
+	const existingPreview = getPreviewElement();
+	if (existingPreview) {
+		return existingPreview;
+	}
+
+	// EasyMDE's built-in preview toggle applies the active class on a timer. Creating the preview surface
+	// ourselves keeps tab switches synchronous so Preview cannot re-activate after the user returns to Editor.
+	const previewElement = document.createElement("div");
+	previewElement.classList.add(PREVIEW_SURFACE_CLASS, ...PREVIEW_CLASS_NAMES);
+	editorInstance.codemirror.getWrapperElement().append(previewElement);
+	return previewElement;
+}
+
+function isPreviewActive(): boolean {
+	return getPreviewElement()?.classList.contains(PREVIEW_ACTIVE_CLASS) ?? false;
+}
+
 function syncPreviewContent(): void {
-	if (!editorInstance || !editorInstance.isPreviewActive()) {
+	if (!editorInstance || !isPreviewActive()) {
 		return;
 	}
 
@@ -77,6 +103,12 @@ function syncPreviewContent(): void {
 
 	// Repeated Preview clicks should refresh the same EasyMDE preview surface with the latest Markdown.
 	previewElement.innerHTML = renderPreview(editorInstance.value());
+}
+
+function notifyContentChangeListeners(content: string): void {
+	for (const listener of contentChangeListeners) {
+		listener(content);
+	}
 }
 
 export function initEditor(initialContent: string): EasyMDE {
@@ -107,12 +139,52 @@ export function initEditor(initialContent: string): EasyMDE {
 		},
 	});
 
+	// One shared change fanout keeps title derivation, save tracking, and preview refreshes in lockstep.
+	editorInstance.codemirror.on("change", () => {
+		if (applyingExternalContent) {
+			return;
+		}
+
+		notifyContentChangeListeners(editorInstance?.value() ?? "");
+	});
+
 	return editorInstance;
 }
 
 export function getEditorContent(): string {
 	if (!editorInstance) return "";
 	return editorInstance.value();
+}
+
+/**
+ * Applies a storage-driven editor update without treating it as a fresh local edit.
+ * That prevents the new-tab page from echoing the same content back into storage in a loop.
+ */
+export function setEditorContent(nextContent: string): void {
+	if (!editorInstance || editorInstance.value() === nextContent) {
+		return;
+	}
+
+	applyingExternalContent = true;
+	editorInstance.value(nextContent);
+	applyingExternalContent = false;
+
+	if (isPreviewActive()) {
+		syncPreviewContent();
+		return;
+	}
+
+	editorInstance.codemirror.refresh();
+}
+
+export function subscribeToEditorContentChanges(
+	listener: (content: string) => void,
+): () => void {
+	contentChangeListeners.add(listener);
+
+	return () => {
+		contentChangeListeners.delete(listener);
+	};
 }
 
 export function setFocusMode(nextActive: boolean): boolean {
@@ -143,8 +215,13 @@ export function setPreviewMode(nextActive: boolean): boolean {
 		return false;
 	}
 
+	const previewElement = getOrCreatePreviewElement();
+	if (!previewElement) {
+		return false;
+	}
+
 	// The tab bar is stateful, so repeated clicks must be idempotent and still refresh live preview content.
-	const previewActive = editorInstance.isPreviewActive();
+	const previewActive = previewElement.classList.contains(PREVIEW_ACTIVE_CLASS);
 	if (previewActive === nextActive) {
 		if (nextActive) {
 			syncPreviewContent();
@@ -155,14 +232,16 @@ export function setPreviewMode(nextActive: boolean): boolean {
 		return previewActive;
 	}
 
-	EasyMDE.togglePreview(editorInstance);
-
-	if (!nextActive) {
-		// Returning from Preview changes the editor width, so refresh before the user types again.
-		editorInstance.codemirror.refresh();
+	previewElement.classList.toggle(PREVIEW_ACTIVE_CLASS, nextActive);
+	if (nextActive) {
+		previewElement.innerHTML = renderPreview(editorInstance.value());
+		return true;
 	}
 
-	return editorInstance.isPreviewActive();
+	// Returning from Preview changes the editor width, so refresh before the user types again.
+	editorInstance.codemirror.refresh();
+
+	return false;
 }
 
 export function toggleFocusMode(): boolean {
@@ -187,7 +266,7 @@ export function showEditor(): void {
 	}
 
 	container.hidden = false;
-	if (editorInstance?.isPreviewActive()) {
+	if (isPreviewActive()) {
 		setPreviewMode(false);
 		return;
 	}
