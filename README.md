@@ -4,25 +4,26 @@ TabMD is a Chrome MV3 extension that replaces the default new tab page with a lo
 
 The current implementation is intentionally narrow:
 
-- Offline only
-- No accounts or sync
-- No network permissions
+- Local-first by default
+- No automatic sync or background upload
+- Optional manual Google Drive backup/restore
 - One note per tab
-- Save on tab blur / page hide
+- Real-time local note persistence across open UI surfaces
 - Popup for recent notes
 - Full list page for search, rename, and delete
 
 ## Features
 
 - Markdown editing with [EasyMDE](https://github.com/Ionaru/easy-markdown-editor)
-- Preview mode using GitHub-flavored Markdown via `marked`
+- Preview mode using EasyMDE's native preview surface with GitHub-flavored Markdown via `marked`
 - Syntax-highlighted fenced code blocks via `highlight.js`
 - Automatic note titles derived from the first meaningful line
 - Manual title overrides
 - Export current note as a `.md` file
-- Focus mode using the editor's fullscreen support
+- Focus mode that expands the editor to the full workspace while keeping an explicit exit control visible
 - Theme setting with `os`, `light`, and `dark` modes
-- Recent-notes popup limited to the 20 most recently edited notes
+- Optional manual Google Drive backup/restore with retention, delete, and restore pagination
+- Recent-notes popup limited to a small configurable set of the most recently edited notes
 - Full notes page with client-side search across titles and body content
 
 ## Product Model
@@ -39,12 +40,18 @@ If the hash is missing, TabMD generates a new UUID with `crypto.randomUUID()` an
 
 ### Persistence
 
-TabMD stores two keys in `chrome.storage.local`:
+TabMD stores note data in `chrome.storage.local` and keeps a few additional local-only keys for optional Drive backup metadata:
 
 ```ts
 const STORAGE_KEYS = {
   settings: 'tabmd:settings',
   notes: 'tabmd:notes'
+} as const;
+
+const DRIVE_STORAGE_KEYS = {
+  driveBackupIndex: 'tabmd:driveBackupIndex',
+  installId: 'tabmd:driveInstallId',
+  retentionCount: 'tabmd:driveRetentionCount'
 } as const;
 ```
 
@@ -62,6 +69,14 @@ type NoteRecord = {
 
 That shape keeps note load, upsert, and delete operations simple and effectively constant-time by note ID.
 
+Drive backups stay isolated per extension install. Each install gets a stable local `installId`, and Drive files are written under:
+
+```text
+tabmd_backups/<installId>/
+```
+
+That separation lets multiple TabMD installs coexist without mixing backup files in the same Drive folder.
+
 ## Runtime Surfaces
 
 ### New tab page
@@ -73,8 +88,9 @@ Responsibilities:
 - Resolve or create the current note ID from `location.hash`
 - Load the note from storage
 - Initialize the EasyMDE editor
-- Save content and title changes on `visibilitychange` / `beforeunload`
-- Toggle editor and preview modes
+- Save content and title changes immediately on editor or title edits
+- Reconcile with `chrome.storage.onChanged` so open surfaces stay in sync
+- Toggle Editor and Preview tabs through EasyMDE's native preview mode
 - Export the current note
 - Open the options page
 
@@ -86,8 +102,9 @@ Runtime page: `popup.html`
 Responsibilities:
 
 - Load all notes on popup open
-- Select the 20 most recent notes without fully sorting the complete collection
-- Render the 20 most recent notes
+- Rerender when note storage changes while the popup is open
+- Select the configured recent-notes popup cap without fully sorting the complete collection
+- Render the configured recent-notes popup cap
 - Open the selected note in a new tab
 - Navigate to the full list page or options page
 
@@ -99,6 +116,7 @@ Runtime page: `list.html`
 Responsibilities:
 
 - Load and sort all notes
+- Rerender when note storage changes while the list page is open
 - Search across derived titles and note content using cached normalized metadata per page load
 - Show a snippet for each matching note
 - Rename notes
@@ -114,6 +132,11 @@ Responsibilities:
 - Read and write the theme setting
 - Apply the chosen theme immediately
 - Show a snackbar after saves
+- Connect/disconnect Google Drive for manual backups
+- Upload note snapshots to Drive and restore them on demand
+- Load the restore list lazily into a dialog
+- Delete individual Drive backups from that dialog
+- Manage retention and explicit restore-dialog pagination
 
 ### Background service worker
 
@@ -126,6 +149,7 @@ The background worker is intentionally minimal. The popup is wired from the mani
 ```text
 entrypoints/
   background/   background service worker
+  drive/        Google Drive auth, REST API, and backup orchestration
   list/         note management page
   newtab/       editor surface
   options/      settings page
@@ -211,6 +235,7 @@ Current automated coverage focuses on:
 - Search and snippet selection
 - Notes storage CRUD behavior
 - Export filename sanitization
+- Google Drive auth, Drive REST helpers, backup orchestration, and options-page backup flows
 - Background entrypoint loading
 - Options entrypoint initialization
 
@@ -222,15 +247,32 @@ The extension currently requests:
 
 - `storage`
 - `unlimitedStorage`
+- `identity`
+- `https://www.googleapis.com/` host permission
 
-No network permission is required. No remote sync path is implemented.
+Google Drive backup is manual and optional. TabMD now uses its own fixed manifest key so it can coexist with `nufftabs` as a separate unpacked extension. The current baked-in OAuth client ID is still the reference one, so Drive auth must be re-provisioned for TabMD's extension ID before authentication will succeed.
+
+Current TabMD extension ID from the baked-in key:
+
+- `npgocjgphlckhehmcghiokimajkmmdef`
+
+## Google Drive Manual Backup
+
+1. Open the options page.
+2. Click `Connect to Google Drive` and approve access.
+3. Set `Retention` to the number of backups you want to keep.
+4. Click `Backup now` to upload all notes.
+5. Click `Restore from backup` to browse Drive snapshots lazily in the restore dialog.
+6. Use `Previous`, `Next`, and the page-size selector to page through backups.
+7. Click `Restore` to overwrite local notes with the selected snapshot, or `Delete` to remove a Drive backup file without restoring it.
 
 ## Known Constraints
 
-- Save behavior is blur-driven, not per-keystroke.
+- Open TabMD surfaces reflect title and content updates as soon as the note is persisted.
 - Multiple tabs pointed at the same note use last-write-wins behavior.
 - Search is client-side over the in-memory note list loaded for the page.
-- Notes are local to the browser profile where the extension is installed.
+- Notes are local to the browser profile unless you explicitly run a manual Drive backup.
+- Drive backup is manual only. It is not sync, merge, or background replication.
 
 ## Related Docs
 
@@ -242,4 +284,4 @@ No network permission is required. No remote sync path is implemented.
 
 ## Status
 
-The repository is no longer a generic WXT scaffold. It now contains a working TabMD implementation centered on a local-only Markdown new tab workflow.
+The repository is no longer a generic WXT scaffold. It now contains a working TabMD implementation centered on a local-first Markdown new tab workflow with optional manual Google Drive backup.

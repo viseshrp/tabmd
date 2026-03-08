@@ -157,6 +157,39 @@ describe("list entrypoint", () => {
 		expect(document.getElementById("empty-state")?.hidden).toBe(false);
 	});
 
+	it("rerenders instantly when note storage changes", async () => {
+		const alpha = makeNote("alpha", "First body", "Alpha", 100);
+		const mock = createMockChrome({
+			initialStorage: {
+				[STORAGE_KEYS.notes]: {
+					[alpha.id]: alpha,
+				},
+			},
+		});
+		setMockChrome(mock);
+
+		await import("../../entrypoints/list/index");
+		await flushMicrotasks();
+		expect(document.querySelector(".note-title")?.textContent).toBe("Alpha");
+
+		await mock.storage.local.set({
+			[STORAGE_KEYS.notes]: {
+				alpha: {
+					...alpha,
+					title: "Live rename",
+					content: "# Live rename\nBody",
+					modifiedAt: 200,
+				},
+			},
+		});
+		await flushMicrotasks();
+
+		expect(document.querySelector(".note-title")?.textContent).toBe(
+			"Live rename",
+		);
+		expect(document.getElementById("note-count")?.textContent).toBe("1");
+	});
+
 	it("shows snackbar errors when rename or delete persistence fails", async () => {
 		const alpha = makeNote("alpha", "Body", "Alpha", 100);
 		const mock = createMockChrome({

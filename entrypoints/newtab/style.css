@@ -11,8 +11,8 @@ body {
   height: 100vh;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  gap: 20px;
-  padding: 24px;
+  gap: 12px;
+  padding: 16px;
   box-sizing: border-box;
 }
 
@@ -22,9 +22,9 @@ body {
 
 .header-top {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(300px, 420px);
-  gap: 20px;
-  align-items: start;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
 }
 
 .title-panel,
@@ -35,11 +35,13 @@ body {
 
 .title-panel {
   display: grid;
-  gap: 12px;
-  padding: 20px 22px;
+  gap: 4px;
+  padding: 10px 14px;
+  min-height: 0;
 }
 
 .eyebrow {
+  display: none;
   margin: 0;
   color: var(--md-sys-color-primary);
   font-size: 13px;
@@ -57,12 +59,12 @@ body {
 .title-display {
   width: 100%;
   margin: 0;
-  padding: 8px 10px;
-  border-radius: 10px;
+  padding: 4px 8px;
+  border-radius: 8px;
   color: var(--md-sys-color-on-surface);
-  font-size: clamp(28px, 4vw, 36px);
+  font-size: clamp(20px, 2.4vw, 26px);
   font-weight: 700;
-  line-height: 1.08;
+  line-height: 1.15;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -76,18 +78,19 @@ body {
 
 .title-input {
   width: 100%;
-  padding: 8px 10px;
+  padding: 4px 8px;
   border: 1px solid var(--md-sys-color-primary);
-  border-radius: 10px;
+  border-radius: 8px;
   background: rgba(var(--md-sys-color-outline-rgb), 0.06);
   color: var(--md-sys-color-on-surface);
-  font-size: clamp(28px, 4vw, 36px);
+  font-size: clamp(20px, 2.4vw, 26px);
   font-weight: 700;
   outline: 0;
   font-family: inherit;
 }
 
 .title-help {
+  display: none;
   margin: 0;
   color: var(--md-sys-color-on-surface-variant);
   font-size: 14px;
@@ -96,23 +99,29 @@ body {
 
 .header-actions {
   display: grid;
-  gap: 16px;
-  padding: 16px;
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  align-items: center;
+  justify-content: end;
+  gap: 10px;
+  padding: 10px 12px;
 }
 
+/* Tabs stay prominent and easy to hit, while the rest of the toolbar shrinks to the content it actually needs. */
 .tab-bar {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  padding: 6px;
+  gap: 6px;
+  padding: 4px;
   border-radius: var(--md-sys-shape-corner-medium);
   background: rgba(var(--md-sys-color-outline-rgb), 0.08);
+  min-width: 220px;
 }
 
 .tab-btn {
   border: 0;
-  border-radius: 10px;
-  padding: 12px 14px;
+  border-radius: 8px;
+  padding: 10px 14px;
   background: transparent;
   color: var(--md-sys-color-on-surface-variant);
   font-size: 14px;
@@ -138,8 +147,10 @@ body {
 /* The action row keeps primary workspace actions visible without forcing the toolbar into icon-only affordances. */
 .action-row {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  gap: 8px;
+  justify-content: end;
 }
 
 .action-btn {
@@ -149,7 +160,8 @@ body {
   gap: 8px;
   border: 1px solid rgba(var(--md-sys-color-outline-rgb), 0.18);
   border-radius: 12px;
-  padding: 12px 14px;
+  min-height: 40px;
+  padding: 9px 12px;
   background: rgba(var(--md-sys-color-outline-rgb), 0.06);
   color: var(--md-sys-color-on-surface);
   cursor: pointer;
@@ -165,9 +177,62 @@ body {
   transform: translateY(-1px);
 }
 
+.action-btn.active,
+.action-btn[aria-pressed='true'] {
+  background: rgba(var(--md-sys-color-outline-rgb), 0.16);
+  border-color: rgba(var(--md-sys-color-outline-rgb), 0.34);
+}
+
 .main-content {
   min-height: 0;
   overflow: hidden;
+}
+
+/* Focus mode leaves only the exit control on screen so the editor can own the workspace. */
+body.focus-mode-active .page-shell {
+  padding: 0;
+  gap: 0;
+}
+
+body.focus-mode-active .app-header {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 20;
+}
+
+body.focus-mode-active .header-top {
+  display: block;
+}
+
+body.focus-mode-active .title-panel,
+body.focus-mode-active .tab-bar,
+body.focus-mode-active #btn-export,
+body.focus-mode-active #btn-options {
+  display: none;
+}
+
+body.focus-mode-active .header-actions {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+body.focus-mode-active .action-row {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+body.focus-mode-active .action-btn {
+  background: var(--md-sys-color-surface);
+  box-shadow: var(--md-sys-elevation-2);
+}
+
+body.focus-mode-active .main-content {
+  position: fixed;
+  inset: 0;
+  border: 0;
+  border-radius: 0;
 }
 
 .editor-frame {
@@ -200,6 +265,10 @@ body {
   font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
 }
 
+body.focus-mode-active .EasyMDEContainer .CodeMirror {
+  padding-top: 88px;
+}
+
 .EasyMDEContainer .CodeMirror-scroll {
   min-height: 100%;
 }
@@ -222,11 +291,30 @@ body {
   display: none !important;
 }
 
-/* Preview typography keeps the reading surface airy while reusing the same card shell as the editor. */
-#preview-container {
+.EasyMDEContainer .editor-preview-full {
+  inset: 0;
+  overflow-y: auto;
+  background: transparent;
+}
+
+/* Preview mode should swap surfaces, not stack them, so the editor chrome is fully hidden while preview is active. */
+.EasyMDEContainer .CodeMirror.tabmd-preview-mode > :not(.editor-preview-full) {
+  display: none;
+}
+
+/* EasyMDE owns the preview surface, and these classes keep it visually aligned with the writing canvas. */
+.EasyMDEContainer .tabmd-preview {
   max-width: 880px;
   margin: 0 auto;
   padding: 30px 40px 48px;
+  box-sizing: border-box;
+  min-height: 100%;
+  color: var(--md-sys-color-on-background);
+  background: transparent;
+}
+
+body.focus-mode-active .EasyMDEContainer .tabmd-preview {
+  padding-top: 88px;
 }
 
 .markdown-body {
@@ -319,15 +407,31 @@ body {
 
   .header-top {
     grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .header-actions {
+    grid-auto-flow: row;
+    grid-auto-columns: initial;
+    justify-content: stretch;
+  }
+
+  .tab-bar {
+    min-width: 0;
+  }
+
+  .action-row {
+    justify-content: stretch;
   }
 }
 
 @media (max-width: 640px) {
   .action-row {
-    grid-template-columns: 1fr;
+    grid-auto-flow: row;
+    grid-auto-columns: initial;
   }
 
-  #preview-container {
+  .EasyMDEContainer .tabmd-preview {
     padding: 24px 20px 36px;
   }
 }

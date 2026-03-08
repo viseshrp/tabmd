@@ -20,11 +20,6 @@
           Control how TabMD looks across the new tab, popup, list, and settings pages.
         </p>
       </div>
-      <div class="header-summary surface-card" aria-hidden="true">
-        <span class="summary-label">Available now</span>
-        <strong class="summary-value">Appearance</strong>
-        <span class="summary-detail">Theme changes apply immediately everywhere.</span>
-      </div>
     </header>
 
     <main class="settings-content">
@@ -70,11 +65,130 @@
           </div>
         </div>
       </section>
+
+      <!-- Drive backup is fully optional and kept in its own panel so network-related UI never leaks into local-only settings. -->
+      <section
+        class="settings-panel surface-card drive-backup"
+        aria-labelledby="drive-backup-title"
+      >
+        <div class="panel-header">
+          <h2 class="panel-title" id="drive-backup-title">Google Drive Backup</h2>
+          <p class="panel-description">
+            Create manual backups of all notes in your own Google Drive, then restore any saved snapshot later.
+          </p>
+        </div>
+        <div class="panel-body drive-backup-body">
+          <div class="drive-controls">
+            <button
+              id="openDriveAuth"
+              class="drive-btn drive-btn-tonal"
+              type="button"
+            >
+              Connect to Google Drive
+            </button>
+            <button
+              id="backupNow"
+              class="drive-btn drive-btn-primary"
+              type="button"
+            >
+              Backup now
+            </button>
+            <button
+              id="openDriveRestore"
+              class="drive-btn drive-btn-secondary"
+              type="button"
+            >
+              Restore from backup
+            </button>
+          </div>
+
+          <label class="drive-retention" for="driveRetentionCount">
+            <span class="setting-name">Retention</span>
+            <span class="setting-desc">Choose how many recent backups TabMD should keep in Drive.</span>
+            <input
+              id="driveRetentionCount"
+              type="number"
+              min="1"
+              max="500"
+              step="1"
+              placeholder="10"
+            />
+          </label>
+
+          <div
+            id="driveStatus"
+            class="drive-status"
+            role="status"
+            aria-live="polite"
+          ></div>
+        </div>
+      </section>
     </main>
   </div>
 
+  <dialog
+    id="driveRestoreDialog"
+    class="drive-restore-dialog"
+    aria-labelledby="driveRestoreTitle"
+  >
+    <div class="drive-restore-header">
+      <h3 id="driveRestoreTitle">Restore from Google Drive</h3>
+      <button
+        id="closeDriveRestore"
+        type="button"
+        class="drive-restore-close drive-btn drive-btn-icon"
+        aria-label="Close restore dialog"
+      >
+        &times;
+      </button>
+    </div>
+    <p class="drive-restore-copy">
+      Pick a backup snapshot to restore. This replaces all local notes.
+    </p>
+    <div class="drive-list-wrap">
+      <table class="drive-list-table">
+        <thead>
+          <tr>
+            <th>When</th>
+            <th>Notes</th>
+            <th>Size</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="driveBackupList"></tbody>
+      </table>
+    </div>
+    <div class="drive-restore-actions">
+      <label class="drive-page-size" for="driveRestorePageSize">
+        <span>Backups per page</span>
+        <select id="driveRestorePageSize">
+          <option value="5" selected>5</option>
+          <option value="10">10</option>
+          <option value="15">15</option>
+          <option value="20">20</option>
+        </select>
+      </label>
+      <div class="drive-page-nav">
+        <button
+          id="previousDriveBackupsPage"
+          class="drive-btn drive-btn-secondary"
+          type="button"
+        >
+          Previous
+        </button>
+        <button
+          id="nextDriveBackupsPage"
+          class="drive-btn drive-btn-secondary"
+          type="button"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  </dialog>
+
   <!-- We inject the snackbar container here, reusing the same element class and semantics -->
-  <div id="snackbar" class="snackbar" hidden></div>
+  <div id="snackbar" class="snackbar" role="status" aria-live="polite" hidden></div>
 
   <!-- Entrypoint script injected automatically by WXT -->
   <script type="module" src="index.ts"></script>

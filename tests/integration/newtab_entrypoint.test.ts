@@ -2,42 +2,51 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createMockChrome, setMockChrome } from "../helpers/mock_chrome";
 import { flushMicrotasks } from "../helpers/flush";
+import type { NoteRecord } from "../../entrypoints/shared/storage";
 
 const initEditor = vi.fn();
 const getEditorContent = vi.fn(() => "Editor body");
 const hideEditor = vi.fn();
+const showPreview = vi.fn();
 const showEditor = vi.fn();
+const setFocusMode = vi.fn();
+const setEditorContent = vi.fn();
+const subscribeToEditorContentChanges = vi.fn();
 const toggleFocusMode = vi.fn();
 const initSaveTracking = vi.fn();
+const replaceTrackedNote = vi.fn();
+const saveCurrentNote = vi.fn();
+const applyTitleState = vi.fn();
+const getCommittedTitle = vi.fn(() => null);
 const initTitleActions = vi.fn();
-const renderPreview = vi.fn(async () => "<p>preview</p>");
-const showPreviewContainer = vi.fn();
-const hidePreviewContainer = vi.fn();
 const performExport = vi.fn();
 const generateUUID = vi.fn(() => "generated-id");
 const readNote = vi.fn();
+const subscribeToNotes = vi.fn();
 const readSettings = vi.fn(async () => ({ theme: "dark" as const }));
 
 vi.mock("../../entrypoints/newtab/editor", () => ({
 	initEditor,
 	getEditorContent,
 	hideEditor,
+	showPreview,
 	showEditor,
+	setFocusMode,
+	setEditorContent,
+	subscribeToEditorContentChanges,
 	toggleFocusMode,
 }));
 
 vi.mock("../../entrypoints/newtab/save", () => ({
 	initSaveTracking,
+	replaceTrackedNote,
+	saveCurrentNote,
 }));
 
 vi.mock("../../entrypoints/newtab/title", () => ({
+	applyTitleState,
+	getCommittedTitle,
 	initTitleActions,
-}));
-
-vi.mock("../../entrypoints/newtab/preview", () => ({
-	renderPreview,
-	showPreviewContainer,
-	hidePreviewContainer,
 }));
 
 vi.mock("../../entrypoints/newtab/export", () => ({
@@ -50,6 +59,7 @@ vi.mock("../../entrypoints/shared/uuid", () => ({
 
 vi.mock("../../entrypoints/shared/notes", () => ({
 	readNote,
+	subscribeToNotes,
 }));
 
 vi.mock("../../entrypoints/shared/storage", () => ({
@@ -63,18 +73,24 @@ describe("newtab entrypoint", () => {
 		getEditorContent.mockReset();
 		getEditorContent.mockReturnValue("Editor body");
 		hideEditor.mockReset();
+		showPreview.mockReset();
 		showEditor.mockReset();
+		setFocusMode.mockReset();
+		setEditorContent.mockReset();
+		subscribeToEditorContentChanges.mockReset();
 		toggleFocusMode.mockReset();
 		initSaveTracking.mockReset();
+		replaceTrackedNote.mockReset();
+		saveCurrentNote.mockReset();
+		applyTitleState.mockReset();
+		getCommittedTitle.mockReset();
+		getCommittedTitle.mockReturnValue(null);
 		initTitleActions.mockReset();
-		renderPreview.mockReset();
-		renderPreview.mockResolvedValue("<p>preview</p>");
-		showPreviewContainer.mockReset();
-		hidePreviewContainer.mockReset();
 		performExport.mockReset();
 		generateUUID.mockReset();
 		generateUUID.mockReturnValue("generated-id");
 		readNote.mockReset();
+		subscribeToNotes.mockReset();
 		readSettings.mockReset();
 		readSettings.mockResolvedValue({ theme: "dark" });
 
@@ -85,7 +101,6 @@ describe("newtab entrypoint", () => {
       <button id="btn-export"></button>
       <button id="btn-options"></button>
       <div id="editor-container"></div>
-      <div id="preview-container" hidden></div>
       <h1 id="note-title-display"></h1>
       <input id="note-title-input" hidden />
       <textarea id="editor-textarea"></textarea>
@@ -112,25 +127,38 @@ describe("newtab entrypoint", () => {
 		expect(initSaveTracking).toHaveBeenCalledWith(
 			expect.objectContaining({ id: "generated-id", content: "", title: null }),
 		);
+		expect(subscribeToEditorContentChanges).toHaveBeenCalledTimes(1);
+		expect(subscribeToNotes).toHaveBeenCalledTimes(1);
 
 		document
 			.getElementById("tab-preview")
 			?.dispatchEvent(new MouseEvent("click"));
 		await flushMicrotasks();
-		expect(hideEditor).toHaveBeenCalled();
-		expect(renderPreview).toHaveBeenCalledWith("Editor body");
-		expect(showPreviewContainer).toHaveBeenCalledWith("<p>preview</p>");
-
-		document
-			.getElementById("tab-editor")
-			?.dispatchEvent(new MouseEvent("click"));
-		expect(hidePreviewContainer).toHaveBeenCalled();
-		expect(showEditor).toHaveBeenCalled();
+		expect(
+			document.getElementById("tab-preview")?.classList.contains("active"),
+		).toBe(true);
+		expect(
+			document.getElementById("tab-editor")?.classList.contains("active"),
+		).toBe(false);
+		expect(setFocusMode).toHaveBeenCalledWith(false);
+		expect(showPreview).toHaveBeenCalled();
 
 		document
 			.getElementById("btn-focus")
 			?.dispatchEvent(new MouseEvent("click"));
+		expect(showEditor).toHaveBeenCalled();
 		expect(toggleFocusMode).toHaveBeenCalled();
+
+		document
+			.getElementById("tab-editor")
+			?.dispatchEvent(new MouseEvent("click"));
+		expect(
+			document.getElementById("tab-editor")?.classList.contains("active"),
+		).toBe(true);
+		expect(
+			document.getElementById("tab-preview")?.classList.contains("active"),
+		).toBe(false);
+		expect(showEditor).toHaveBeenCalled();
 
 		document
 			.getElementById("btn-export")
@@ -179,5 +207,79 @@ describe("newtab entrypoint", () => {
 		expect(initSaveTracking).toHaveBeenCalledWith(
 			expect.objectContaining({ id: "missing-id", content: "", title: null }),
 		);
+	});
+
+	it("saves immediately on editor and title changes", async () => {
+		readNote.mockResolvedValue(null);
+		let handleEditorChange: ((content: string) => void) | undefined;
+		subscribeToEditorContentChanges.mockImplementation((listener) => {
+			handleEditorChange = listener;
+			return () => undefined;
+		});
+
+		await import("../../entrypoints/newtab/index");
+		await flushMicrotasks();
+
+		handleEditorChange?.("# Live heading");
+		expect(applyTitleState).toHaveBeenCalledWith(null, "# Live heading");
+		expect(saveCurrentNote).toHaveBeenCalledTimes(1);
+
+		document
+			.getElementById("note-title-input")
+			?.dispatchEvent(new FocusEvent("blur"));
+		expect(saveCurrentNote).toHaveBeenCalledTimes(2);
+	});
+
+	it("applies storage-synced note updates to the active editor", async () => {
+		window.history.replaceState(null, "", "/newtab.html#existing-id");
+		readNote.mockResolvedValue({
+			id: "existing-id",
+			content: "# Existing",
+			title: "Saved title",
+			createdAt: 1,
+			modifiedAt: 2,
+		});
+		let handleNotesChange:
+			| ((notes: Record<string, NoteRecord>) => void)
+			| undefined;
+		subscribeToNotes.mockImplementation((listener) => {
+			handleNotesChange = listener;
+			return () => undefined;
+		});
+
+		await import("../../entrypoints/newtab/index");
+		await flushMicrotasks();
+
+		handleNotesChange?.({
+			other: {
+				id: "other",
+				content: "Ignore me",
+				title: "Other",
+				createdAt: 1,
+				modifiedAt: 3,
+			},
+		});
+		expect(replaceTrackedNote).not.toHaveBeenCalled();
+		expect(setEditorContent).not.toHaveBeenCalled();
+
+		handleNotesChange?.({
+			"existing-id": {
+				id: "existing-id",
+				content: "# Synced",
+				title: "Synced title",
+				createdAt: 1,
+				modifiedAt: 3,
+			},
+		});
+
+		expect(replaceTrackedNote).toHaveBeenCalledWith(
+			expect.objectContaining({
+				id: "existing-id",
+				content: "# Synced",
+				title: "Synced title",
+			}),
+		);
+		expect(applyTitleState).toHaveBeenCalledWith("Synced title", "# Synced");
+		expect(setEditorContent).toHaveBeenCalledWith("# Synced");
 	});
 });

@@ -1,0 +1,1 @@
+export const POPUP_RECENT_NOTES_LIMIT = 10;

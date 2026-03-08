@@ -1,5 +1,7 @@
 # IMPLEMENTATION_PLAN.md — TabMD Engineering Plan
 
+> Note: this plan documents the original local-only TabMD build. Optional Google Drive backup was added later and is documented in `README.md`, `docs/storage.md`, `docs/TESTING.md`, and `docs/SPEC.md`.
+
 ## 1. Proposed Architecture
 
 TabMD is a WXT-based Chrome MV3 extension. The existing scaffold already provides the WXT build system, Biome linting, Vitest unit/integration tests, Playwright E2E tests, and GitHub Actions CI/CD.
@@ -78,10 +80,10 @@ These files exist in the current scaffold but are not needed for TabMD:
 |---------------------------------------------|-------------------------------------------------------|
 | `entrypoints/newtab/index.html`             | New tab page HTML shell                               |
 | `entrypoints/newtab/index.ts`               | New tab page init: editor, save, title, preview       |
-| `entrypoints/newtab/editor.ts`              | EasyMDE setup, configuration, fullscreen              |
-| `entrypoints/newtab/save.ts`                | Save-on-blur logic                                    |
+| `entrypoints/newtab/editor.ts`              | EasyMDE setup, configuration, focus mode, native preview state |
+| `entrypoints/newtab/save.ts`                | Real-time save tracking and lifecycle fallback        |
 | `entrypoints/newtab/title.ts`               | Title derivation and manual override logic            |
-| `entrypoints/newtab/preview.ts`             | Preview rendering (Markdown → HTML)                   |
+| `entrypoints/newtab/preview.ts`             | Preview rendering (Markdown → HTML) used by EasyMDE preview hooks |
 | `entrypoints/newtab/export.ts`              | Export current note as .md                            |
 | `entrypoints/newtab/style.css`              | New tab page styles                                   |
 | `entrypoints/popup/index.html`              | Popup HTML shell                                      |
@@ -171,7 +173,7 @@ Use `crypto.randomUUID()` — available in all modern Chrome versions. No librar
 2. If empty:
    - Generate UUID via `crypto.randomUUID()`.
    - Set hash via `history.replaceState(null, '', '#' + id)` — avoids pushing a history entry.
-   - Initialize an empty `NoteRecord` (not yet written to storage — written on first blur).
+   - Initialize an empty `NoteRecord` (not yet written to storage — written on first actual edit).
 3. If non-empty:
    - Attempt to load `NoteRecord` from storage.
    - If found: populate editor with `content`.
@@ -194,18 +196,21 @@ This ensures the newtab entrypoint loads with the correct hash.
 ### 6.1 New Tab Page → Storage
 
 - Reads note on load.
-- Writes note on blur / beforeunload.
-- No real-time sync between multiple open tabs of the same note (last write wins).
+- Writes note immediately on editor and title changes, with `beforeunload` retained as a best-effort fallback.
+- Subscribes to `chrome.storage.onChanged` so other open surfaces reflect title and content edits immediately.
+- Multiple tabs pointed at the same note still use last-write-wins behavior.
 
 ### 6.2 Popup → Storage
 
 - Reads all notes on popup open.
+- Subscribes to `chrome.storage.onChanged` for live rerenders while the popup stays open.
 - Navigates by creating new tabs with hash URLs.
 - Never writes to storage.
 
 ### 6.3 Full List Page → Storage
 
 - Reads all notes on load.
+- Subscribes to `chrome.storage.onChanged` for live rerenders while the page stays open.
 - Writes on rename (updates `title` field).
 - Writes on delete (removes note).
 - Navigates by creating new tabs.
@@ -249,8 +254,8 @@ EasyMDE is the sole third-party runtime dependency. Add via `pnpm add easymde`.
 - **No EasyMDE toolbar** — TabMD has its own minimal UI (Editor/Preview tabs, focus mode button, export, options link). EasyMDE's built-in toolbar is disabled.
 - **No EasyMDE status bar** — disabled.
 - **No EasyMDE side-by-side** — not configured.
-- **Fullscreen** — use `easymde.toggleFullScreen()` programmatically, triggered by TabMD's own focus mode button.
-- **Preview** — use EasyMDE's `previewRender` hook to supply a custom rendering function, but the preview is showed/hidden by TabMD's own tab switching, not EasyMDE's preview toggle.
+- **Focus mode** — keep the visible editor surface active, hide surrounding workspace chrome, and leave an explicit exit control on screen.
+- **Preview** — use EasyMDE's `previewRender` hook as the single preview pipeline, and let TabMD's tabs switch EasyMDE's native preview mode on and off.
 
 ### 7.4 EasyMDE CSS
 
@@ -279,9 +284,9 @@ Use `highlight.js` for fenced code block syntax highlighting. Add via `pnpm add 
 
 1. User clicks "Preview" tab.
 2. Read current content from EasyMDE: `easymde.value()`.
-3. Render via `marked.parse(content)`.
-4. Insert rendered HTML into the preview container.
-5. Switch visibility: hide editor container, show preview container.
+3. EasyMDE switches into preview mode.
+4. EasyMDE calls `previewRender` with the current Markdown.
+5. The preview surface displays the rendered HTML in-place.
 
 ### 8.4 Libraries Required
 
@@ -348,19 +353,20 @@ This utility is used by: newtab page (title area), popup (note list), full list 
 
 ---
 
-## 11. Save-on-Blur
+## 11. Real-Time Save Tracking
 
 ### 11.1 Implementation (`entrypoints/newtab/save.ts`)
 
 1. Track `lastSavedContent` — initialized from the loaded note's content (or empty string for new notes).
-2. Listen to `document.addEventListener('visibilitychange', ...)`.
-3. When `document.visibilityState === 'hidden'`:
+2. Listen to editor-content and title-commit events.
+3. Serialize saves so only one `chrome.storage.local.set` runs at a time.
+4. For each save attempt:
    - Read current content from EasyMDE: `easymde.value()`.
-   - If content === `lastSavedContent`, skip (no-op).
+   - If content and title both match the last saved snapshot, skip (no-op).
    - Otherwise, call `writeNote({ ...note, content, modifiedAt: Date.now() })`.
-   - Update `lastSavedContent`.
-4. Also listen to `window.addEventListener('beforeunload', ...)` as a safety net.
-   - Same logic, but use synchronous-compatible approach (storage write is async; `beforeunload` may not wait for it — this is a best-effort safety net, not a guarantee).
+   - Update the tracked saved snapshot.
+5. Also listen to `window.addEventListener('beforeunload', ...)` as a safety net.
+   - This is still best-effort because the browser may not await the async storage write.
 
 ### 11.2 No Autosave Timer
 
@@ -423,10 +429,10 @@ This is the same Blob + anchor pattern used in the existing scaffold's `exportJs
 
 ### Phase 2: New Tab Editor Page
 
-1. Create `entrypoints/newtab/index.html` with HTML shell (title area, tab bar, editor container, preview container, toolbar).
+1. Create `entrypoints/newtab/index.html` with HTML shell (title area, tab bar, editor container, toolbar).
 2. Install `easymde` dependency.
 3. Create `entrypoints/newtab/editor.ts` — EasyMDE initialization and configuration.
-4. Create `entrypoints/newtab/save.ts` — save-on-blur logic.
+4. Create `entrypoints/newtab/save.ts` — real-time save tracking logic.
 5. Create `entrypoints/newtab/title.ts` — title area UI behavior (show/hide, derive/override).
 6. Create `entrypoints/newtab/index.ts` — page init, hash routing, wiring.
 7. Create `entrypoints/newtab/style.css` — page styles using theme tokens.
@@ -467,7 +473,7 @@ This is the same Blob + anchor pattern used in the existing scaffold's `exportJs
 ### Phase 7: Export and Focus Mode
 
 1. Create `entrypoints/newtab/export.ts` — download current note as `.md`.
-2. Wire focus mode button to `easymde.toggleFullScreen()`.
+2. Wire focus mode button to the visible editor surface and keep an explicit exit control visible.
 3. Add unit tests for export filename sanitization.
 
 ### Phase 8: Background Simplification & Final Cleanup
@@ -492,7 +498,7 @@ tests/
     note_title.test.ts         # Title derivation
     uuid.test.ts               # UUID generation
     search.test.ts             # Search/filter logic
-    save_logic.test.ts         # Save-on-blur logic
+    save_logic.test.ts         # Real-time save tracking logic
     export.test.ts             # Export filename sanitization
     settings.test.ts           # Settings normalization
     ui_notifications.test.ts   # Snackbar notifier (existing)
@@ -561,7 +567,7 @@ tests/
 | EasyMDE CSS conflicts with theme tokens        | Medium     | Override EasyMDE styles with specificity-matched CSS using theme vars |
 | `chrome.storage.local` write contention (two tabs writing same key) | Low | Accept last-write-wins. Document behavior. No locking.              |
 | `beforeunload` handler not reliably saving     | Medium     | Primary save is `visibilitychange`. `beforeunload` is best-effort.  |
-| Large note count slowing popup                 | Low        | Cap popup list to 20 most recent. Full list page handles the rest.  |
+| Large note count slowing popup                 | Low        | Cap popup list to a small configured recent-note limit. Full list page handles the rest.  |
 | `marked` XSS from rendered HTML               | Medium     | Use `marked`'s `sanitize` option or DOMPurify. Verify.              |
 | highlight.js bundle size                       | Low        | Import only common language subsets, not the full bundle.            |
-| EasyMDE fullscreen conflicts with page layout  | Low        | Test fullscreen behavior. Use EasyMDE's native implementation.      |
+| EasyMDE preview DOM or focus styling conflicting with page layout | Low | Test preview and focus transitions against the page shell and override styles locally. |

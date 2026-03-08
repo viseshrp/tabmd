@@ -6,6 +6,7 @@ import {
 	STORAGE_KEYS,
 	type NoteRecord,
 } from "../../entrypoints/shared/storage";
+import { POPUP_RECENT_NOTES_LIMIT } from "../../entrypoints/shared/ui_limits";
 
 function makeNote(id: string, modifiedAt: number): NoteRecord {
 	return {
@@ -32,9 +33,9 @@ describe("popup entrypoint", () => {
 		vi.restoreAllMocks();
 	});
 
-	it("renders the 20 most recent notes and opens navigation targets", async () => {
+	it("renders the configured recent notes cap and opens navigation targets", async () => {
 		const notes = Object.fromEntries(
-			Array.from({ length: 25 }, (_, index) => {
+			Array.from({ length: POPUP_RECENT_NOTES_LIMIT + 15 }, (_, index) => {
 				const note = makeNote(`${index + 1}`, 1000 + index);
 				return [note.id, note];
 			}),
@@ -51,9 +52,11 @@ describe("popup entrypoint", () => {
 		await flushMicrotasks();
 
 		const items = document.querySelectorAll<HTMLLIElement>(".note-item");
-		expect(items).toHaveLength(20);
+		expect(items).toHaveLength(POPUP_RECENT_NOTES_LIMIT);
 		expect(document.documentElement.getAttribute("data-theme")).toBe("dark");
-		expect(items[0]?.textContent).toContain("Note 25");
+		expect(items[0]?.textContent).toContain(
+			`Note ${POPUP_RECENT_NOTES_LIMIT + 15}`,
+		);
 
 		document.querySelector<HTMLAnchorElement>(".note-link")?.click();
 		document.getElementById("btn-more")?.dispatchEvent(new MouseEvent("click"));
@@ -82,6 +85,38 @@ describe("popup entrypoint", () => {
 
 		expect(document.getElementById("empty-state")?.hidden).toBe(false);
 		expect(document.getElementById("note-list")?.hidden).toBe(true);
+	});
+
+	it("rerenders instantly when note storage changes", async () => {
+		const mock = createMockChrome({
+			initialStorage: {
+				[STORAGE_KEYS.notes]: {
+					alpha: makeNote("alpha", 100),
+				},
+			},
+		});
+		setMockChrome(mock);
+
+		await import("../../entrypoints/popup/index");
+		await flushMicrotasks();
+		expect(document.querySelector(".note-link")?.textContent).toContain(
+			"Note alpha",
+		);
+
+		await mock.storage.local.set({
+			[STORAGE_KEYS.notes]: {
+				alpha: {
+					...makeNote("alpha", 200),
+					title: "Renamed live",
+					content: "# Renamed live\nBody",
+				},
+			},
+		});
+		await flushMicrotasks();
+
+		expect(document.querySelector(".note-link")?.textContent).toBe(
+			"Renamed live",
+		);
 	});
 
 	it("shows an error state when notes fail to load", async () => {

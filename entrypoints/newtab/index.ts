@@ -1,92 +1,123 @@
-import { initEditor, getEditorContent, hideEditor, showEditor, toggleFocusMode } from './editor';
-import { readNote, type NoteRecord } from '../shared/notes';
-import { generateUUID } from '../shared/uuid';
-import { initSaveTracking } from './save';
-import { initTitleActions } from './title';
-import { renderPreview, showPreviewContainer, hidePreviewContainer } from './preview';
-import { performExport } from './export';
-import { readSettings } from '../shared/storage';
+import {
+	initEditor,
+	getEditorContent,
+	showPreview,
+	showEditor,
+	setFocusMode,
+	toggleFocusMode,
+	setEditorContent,
+	subscribeToEditorContentChanges,
+} from "./editor";
+import { readNote, subscribeToNotes, type NoteRecord } from "../shared/notes";
+import { generateUUID } from "../shared/uuid";
+import { initSaveTracking, replaceTrackedNote, saveCurrentNote } from "./save";
+import { applyTitleState, getCommittedTitle, initTitleActions } from "./title";
+import { performExport } from "./export";
+import { readSettings } from "../shared/storage";
 
-import './style.css';
+import "./style.css";
 
 async function bootstrap() {
-    // 1. Theme application
-    const settings = await readSettings();
-    if (settings.theme === 'light' || settings.theme === 'dark') {
-        document.documentElement.setAttribute('data-theme', settings.theme);
-    }
+	// 1. Theme application
+	const settings = await readSettings();
+	if (settings.theme === "light" || settings.theme === "dark") {
+		document.documentElement.setAttribute("data-theme", settings.theme);
+	}
 
-    // 2. Hash parsing / Note Loading
-    let noteId = window.location.hash.slice(1);
-    let note: NoteRecord;
+	// 2. Hash parsing / Note Loading
+	let noteId = window.location.hash.slice(1);
+	let note: NoteRecord;
 
-    if (!noteId) {
-        noteId = generateUUID();
-        window.history.replaceState(null, '', `#${noteId}`);
-        note = {
-            id: noteId,
-            content: '',
-            title: null,
-            createdAt: Date.now(),
-            modifiedAt: Date.now()
-        };
-    } else {
-        const loaded = await readNote(noteId);
-        if (loaded) {
-            note = loaded;
-        } else {
-            note = {
-                id: noteId,
-                content: '',
-                title: null,
-                createdAt: Date.now(),
-                modifiedAt: Date.now()
-            };
-        }
-    }
+	if (!noteId) {
+		noteId = generateUUID();
+		window.history.replaceState(null, "", `#${noteId}`);
+		note = {
+			id: noteId,
+			content: "",
+			title: null,
+			createdAt: Date.now(),
+			modifiedAt: Date.now(),
+		};
+	} else {
+		const loaded = await readNote(noteId);
+		if (loaded) {
+			note = loaded;
+		} else {
+			note = {
+				id: noteId,
+				content: "",
+				title: null,
+				createdAt: Date.now(),
+				modifiedAt: Date.now(),
+			};
+		}
+	}
 
-    // 3. UI Initialize
-    initEditor(note.content);
-    initTitleActions(note.title, note.content);
-    initSaveTracking(note);
+	// 3. UI Initialize
+	initEditor(note.content);
+	initTitleActions(note.title, note.content);
+	initSaveTracking(note);
 
-    // 4. Tab switching logic
-    const editorBtn = document.getElementById('tab-editor');
-    const previewBtn = document.getElementById('tab-preview');
+	// Editor edits must update the derived title before saving so every surface receives the same resolved title state.
+	subscribeToEditorContentChanges((content) => {
+		applyTitleState(getCommittedTitle(), content);
+		void saveCurrentNote();
+	});
 
-    editorBtn?.addEventListener('click', () => {
-        editorBtn.classList.add('active');
-        previewBtn?.classList.remove('active');
-        hidePreviewContainer();
-        showEditor();
-    });
+	// Title commits are blur-driven, so listening here keeps the save trigger separate from the display logic.
+	document.getElementById("note-title-input")?.addEventListener("blur", () => {
+		void saveCurrentNote();
+	});
 
-    previewBtn?.addEventListener('click', async () => {
-        previewBtn.classList.add('active');
-        editorBtn?.classList.remove('active');
-        hideEditor();
+	// Storage changes are the cross-surface source of truth for popup, list, and every open editor instance.
+	subscribeToNotes((notes) => {
+		const syncedNote = notes[noteId];
+		if (!syncedNote) {
+			return;
+		}
 
-        // Render on click
-        const html = await renderPreview(getEditorContent());
-        showPreviewContainer(html);
-    });
+		note = syncedNote;
+		replaceTrackedNote(syncedNote);
+		applyTitleState(syncedNote.title, syncedNote.content);
+		setEditorContent(syncedNote.content);
+	});
 
-    // 5. Actions
-    const btnFocus = document.getElementById('btn-focus');
-    btnFocus?.addEventListener('click', toggleFocusMode);
+	// 4. Tab switching logic
+	const editorBtn = document.getElementById("tab-editor");
+	const previewBtn = document.getElementById("tab-preview");
 
-    const btnExport = document.getElementById('btn-export');
-    btnExport?.addEventListener('click', () => {
-        performExport(note.title, getEditorContent());
-    });
+	function showEditorTab(): void {
+		editorBtn?.classList.add("active");
+		previewBtn?.classList.remove("active");
+		showEditor();
+	}
 
-    const btnOptions = document.getElementById('btn-options');
-    btnOptions?.addEventListener('click', () => {
-        chrome.tabs.create({ url: chrome.runtime.getURL('options.html') });
-    });
+	editorBtn?.addEventListener("click", showEditorTab);
 
-    // Global editor text-change to update title derivation real-time if needed
-    // But spec says first-line derivation happens on render. We sync on initial render.
+	previewBtn?.addEventListener("click", () => {
+		setFocusMode(false);
+		previewBtn.classList.add("active");
+		editorBtn?.classList.remove("active");
+		showPreview();
+	});
+
+	// 5. Actions
+	const btnFocus = document.getElementById("btn-focus");
+	btnFocus?.addEventListener("click", () => {
+		// Focus mode should always affect the visible editor, not a hidden instance behind Preview.
+		showEditorTab();
+		toggleFocusMode();
+	});
+
+	const btnExport = document.getElementById("btn-export");
+	btnExport?.addEventListener("click", () => {
+		performExport(getCommittedTitle(), getEditorContent());
+	});
+
+	const btnOptions = document.getElementById("btn-options");
+	btnOptions?.addEventListener("click", () => {
+		chrome.tabs.create({ url: chrome.runtime.getURL("options.html") });
+	});
 }
 
 bootstrap().catch(console.error);

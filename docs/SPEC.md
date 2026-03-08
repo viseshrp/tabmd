@@ -2,7 +2,7 @@
 
 ## 1. Product Overview
 
-TabMD is a Chrome extension that replaces the default new tab page with a Markdown note editor. Each new tab opens a brand-new note. Notes are stored locally in `chrome.storage.local` and are never transmitted externally.
+TabMD is a Chrome extension that replaces the default new tab page with a Markdown note editor. Each new tab opens a brand-new note. Notes are stored locally in `chrome.storage.local` by default, with an optional manual Google Drive backup/restore flow available from the options page.
 
 The editor experience is powered by EasyMDE. The product should feel lightweight, minimal, and writing-focused — not like a developer IDE.
 
@@ -16,8 +16,9 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
 2. One note per tab, identified by a unique ID embedded in the URL hash.
 3. Provide a complete GFM-compatible preview (tables, task lists, fenced code blocks with syntax highlighting).
 4. Make note management fast: popup for quick access, full list page for searching, renaming, and deleting.
-5. Keep all data local-only, using `chrome.storage.local` with `unlimitedStorage`.
+5. Keep all primary note-taking flows local-first, using `chrome.storage.local` with `unlimitedStorage`.
 6. Support light/dark theming with OS-default detection and manual override.
+7. Allow users to create and restore manual Google Drive backups without turning TabMD into a sync product.
 
 ---
 
@@ -40,8 +41,8 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
 1. **Writing-first.** The editor occupies the full page. Chrome and controls fade into the background.
 2. **Instant.** A new tab must feel as fast as Chrome's default. No loading spinners, no splash screens.
 3. **Minimal.** Every visible element must serve the writing or note-management workflow. No decorative chrome.
-4. **Predictable.** Notes save automatically on blur. Titles derive automatically. The user never thinks about persistence.
-5. **Local.** Data never leaves the browser. The extension requests no network permissions.
+4. **Predictable.** Notes save automatically as edits happen. Titles derive automatically. The user never thinks about persistence.
+5. **Local-first.** Data stays in the browser unless the user explicitly runs a manual Google Drive backup or restore action.
 
 ---
 
@@ -54,19 +55,19 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
 3. A new note ID is generated and placed in the URL hash (e.g., `newtab.html#abc123`).
 4. The EasyMDE editor renders with autofocus and the placeholder "Start writing…".
 5. The user types. The placeholder disappears on first input.
-6. When the user navigates away or the tab loses focus, the note is saved.
+6. As the user types, the note is persisted and other open TabMD surfaces reflect the latest title/content.
 
 ### 5.2 Resume an Existing Note
 
 1. User clicks a note card in the popup, full list page, or any other link containing the note's hash.
 2. A new tab opens with `newtab.html#<noteId>`.
 3. The editor loads the saved content for that note ID.
-4. The user edits. Note saves on blur.
+4. The user edits. Note changes persist immediately and other open TabMD surfaces reflect them.
 
 ### 5.3 Preview a Note
 
 1. On the editor page, the user clicks the "Preview" tab (center-top).
-2. The editor is hidden; a rendered HTML preview replaces it.
+2. EasyMDE switches the writing surface into preview mode.
 3. The preview renders the current Markdown content with GFM features and syntax-highlighted code blocks.
 4. Clicking the "Editor" tab returns to the editor.
 
@@ -101,8 +102,27 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
 ### 5.8 Toggle Focus Mode
 
 1. On the editor page, the user activates focus mode.
-2. EasyMDE enters fullscreen mode — the editor fills the viewport.
+2. Focus mode hides the surrounding workspace chrome and expands the editor to fill the viewport.
 3. The user exits focus mode via the same toggle or Escape.
+
+### 5.9 Manual Google Drive Backup
+
+1. User opens the options page.
+2. Connects Google Drive explicitly.
+3. Sets a retention count.
+4. Clicks "Backup now".
+5. TabMD uploads a JSON snapshot containing all notes into the user's Drive account.
+6. Backup files are stored under the install-specific Drive path `tabmd_backups/<installId>/`.
+
+### 5.10 Restore from Google Drive
+
+1. User opens the options page.
+2. Clicks "Restore from backup".
+3. TabMD loads one page of backup metadata from Google Drive.
+4. The restore dialog exposes explicit page-size, previous, and next controls.
+5. User selects a backup row and confirms restore.
+6. The selected snapshot overwrites local notes.
+7. User may also delete an individual Drive backup row without restoring it.
 
 ---
 
@@ -128,7 +148,7 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
   - If hash ID is not found in storage: treat as a new note with that ID.
 - EasyMDE autofocuses on load.
 - Placeholder "Start writing…" shows in empty editor; disappears on first input.
-- Note saves when the page/tab loses focus (`visibilitychange` event, `beforeunload` event).
+- Note saves as editor content and title changes happen, with `beforeunload` retained as a best-effort fallback.
 - Title area:
   - If no manual title is set, display the first-line-derived title (see §7.4).
   - If manual title is set, display the manual title.
@@ -137,8 +157,9 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
 - Preview tab:
   - Preview content renders only when the Preview tab is first clicked (not eagerly).
   - Re-renders each time the Preview tab is clicked.
+  - Uses EasyMDE's native preview surface rather than a separate preview container.
   - Supports: GFM tables, task lists, fenced code blocks with syntax highlighting.
-- Focus mode uses EasyMDE's built-in fullscreen toggle.
+- Focus mode keeps the editor visible, hides the surrounding workspace chrome, and leaves the focus toggle available as an exit control.
 - Export downloads the current note content as `<title>.md`.
 - Options page link opens `options.html` in a new tab.
 
@@ -161,7 +182,7 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
 
 **Constraints:**
 - The popup must load fast. Minimal DOM, no heavy rendering.
-- Limit displayed notes to a reasonable count (e.g., 20 most recent) to keep the popup snappy. The full list page handles the complete set.
+- Limit displayed notes to a reasonable configurable count to keep the popup snappy. The full list page handles the complete set.
 
 ### 6.3 Full List Page
 
@@ -207,12 +228,24 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
 - **Theme** setting:
   - Three choices: "Use system", "Light", "Dark".
   - Radio buttons, following the existing options page pattern.
+- **Google Drive backup** section:
+  - Connect/disconnect button.
+  - Backup-now button.
+  - Restore dialog opener.
+  - Retention number input.
+  - Restore dialog with backup table, delete/restore row actions, and explicit pagination controls.
 
 **Behavior:**
 - On load, read current settings from storage and populate controls.
 - Changes save immediately (on `change` event, same as existing scaffold pattern).
 - Snackbar confirmation on save ("Settings saved.").
 - Theme changes apply immediately to the options page itself.
+- Drive auth status is checked non-interactively on load.
+- Drive backup uploads all notes.
+- Restore-list metadata is loaded lazily only when the user opens the restore dialog.
+- Restore replaces local notes with the selected backup payload.
+- Delete removes only the selected Drive backup file.
+- The baked-in manifest key gives TabMD its own stable extension ID, so the OAuth client must be configured for that specific ID.
 - Reachable from: popup, full list page, new tab editor page.
 
 ---
@@ -230,7 +263,7 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
   - `title`: `null` (triggers first-line fallback).
   - `createdAt`: current timestamp.
   - `modifiedAt`: current timestamp.
-- The note is saved to storage on first blur — blank notes are persisted.
+- The note is saved to storage on the first actual content or title change.
 
 ### 7.2 Opening Existing Notes
 
@@ -264,12 +297,13 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
 **Rename from full list page:**
 - Rename action sets the `title` field in the note record, same as manual title override.
 
-### 7.5 Save-on-Blur
+### 7.5 Real-Time Save Behavior
 
-- The note saves when the page loses visibility (`document.visibilitychange` with `document.visibilityState === 'hidden'`).
-- Also save on `beforeunload` as a safety net.
-- Save writes the current editor content and updated `modifiedAt` to storage.
-- If the content has not changed since the last save, skip the write.
+- The note saves when editor content changes or when the title commit completes.
+- Also save on `beforeunload` as a best-effort safety net.
+- Save writes the current editor content, title, and updated `modifiedAt` to storage.
+- If the content and title have not changed since the last save, skip the write.
+- Popup and full-list surfaces subscribe to storage changes so open UI stays synchronized without timers.
 - No periodic autosave timer. No save button. No debounced save.
 
 ### 7.6 Preview Rendering
@@ -279,7 +313,7 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
   - Tables.
   - Task lists (checkboxes).
   - Fenced code blocks with language-specified syntax highlighting.
-- Use EasyMDE's preview rendering hooks to integrate a Markdown renderer and syntax highlighter.
+- Use EasyMDE's native preview mode plus `previewRender` hooks to integrate a Markdown renderer and syntax highlighter.
 
 ### 7.7 Search Behavior
 
@@ -328,11 +362,10 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
 
 ### 7.12 Focus / Fullscreen Mode
 
-- Focus mode uses EasyMDE's built-in fullscreen toggle.
-- A button/action on the editor page triggers `easymde.toggleFullScreen()`.
-- In fullscreen, the EasyMDE editor fills the entire viewport.
-- Exit via the same button or Escape key (EasyMDE handles Escape natively).
-- No custom fullscreen architecture.
+- A button/action on the editor page enters focus mode for the visible editor surface.
+- Focus mode hides the title card, tabs, export action, and settings action so the editor fills the viewport.
+- The focus toggle remains visible as the explicit exit control.
+- Escape exits focus mode without relying on timers or delayed layout hacks.
 
 ---
 
@@ -388,7 +421,7 @@ Notes are stored as an object keyed by note ID for O(1) lookup.
 | Very large note content                         | `unlimitedStorage` permission handles this. No content size limit enforced by the extension.  |
 | Note with only whitespace content               | Auto-title shows "Untitled". Content is preserved as-is.                                     |
 | Title field receives only whitespace             | Treated as empty → revert to auto-title (`title` set to `null`).                            |
-| Browser crash during editing                    | Data since last blur is lost. Accepted trade-off for simplicity.                             |
+| Browser crash during editing                    | Data since the last successful real-time write is lost. `beforeunload` remains best-effort. |
 | Storage quota exceeded despite unlimitedStorage  | Log error via `logExtensionError`. Show snackbar: "Failed to save. Storage may be full."     |
 
 ### 9.3 Error / Fallback Expectations
@@ -453,8 +486,9 @@ Notes are stored as an object keyed by note ID for O(1) lookup.
 
 ### 10.7 Focus Mode
 
-- [ ] Focus mode button enters EasyMDE fullscreen.
-- [ ] Escape exits fullscreen.
+- [ ] Focus mode button expands the visible editor surface to the viewport.
+- [ ] The focus toggle remains available while focus mode is active.
+- [ ] Escape exits focus mode.
 
 ### 10.8 Export
 

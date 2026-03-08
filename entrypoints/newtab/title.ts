@@ -2,6 +2,8 @@ import { resolveNoteTitle } from "../shared/note_title";
 import { updateNoteTitle } from "./save";
 import { getEditorContent } from "./editor";
 
+let currentTitle: string | null = null;
+
 export function initTitleActions(
 	initialTitle: string | null,
 	initialContent: string,
@@ -13,8 +15,8 @@ export function initTitleActions(
 
 	if (!display || !input) return;
 
-	// Keep the last committed title in closure state so reopen/cancel flows stay in sync with the saved model.
-	let currentTitle = initialTitle;
+	// Shared title state lets local edits and storage-driven updates resolve against the same committed value.
+	currentTitle = initialTitle;
 
 	// Sync initial state
 	syncTitleDisplay(currentTitle, initialContent);
@@ -80,4 +82,17 @@ export function syncTitleDisplay(title: string | null, content: string) {
 	) as HTMLHeadingElement;
 	if (!display) return;
 	display.textContent = resolveNoteTitle({ title, content });
+}
+
+/**
+ * Applies the latest committed title and content from either the editor or storage.
+ * Auto titles follow content instantly, while manual titles remain stable until the user changes them.
+ */
+export function applyTitleState(title: string | null, content: string): void {
+	currentTitle = title;
+	syncTitleDisplay(currentTitle, content);
+}
+
+export function getCommittedTitle(): string | null {
+	return currentTitle;
 }

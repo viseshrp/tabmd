@@ -3,6 +3,8 @@ import {
 	deleteNote,
 	writeNote,
 	readNote,
+	sortNotesByModifiedDesc,
+	subscribeToNotes,
 } from "../shared/notes";
 import { type NoteRecord, readSettings } from "../shared/storage";
 import {
@@ -43,6 +45,11 @@ async function bootstrap() {
 
 	await loadNotes();
 
+	// The full list reuses storage snapshots directly so external edits rerender immediately without another read cycle.
+	subscribeToNotes((notes) => {
+		applyNotes(Object.values(notes));
+	});
+
 	pageElements.searchInput.addEventListener("input", () => {
 		renderNotes(pageElements?.searchInput.value ?? "");
 	});
@@ -58,13 +65,17 @@ async function bootstrap() {
 
 async function loadNotes() {
 	try {
-		allNotes = await listNotesSorted();
-		searchIndex = buildSearchIndex(allNotes);
-		renderNotes(pageElements?.searchInput.value ?? "");
+		applyNotes(await listNotesSorted());
 	} catch (err) {
 		logExtensionError("Failed to load notes", err, "list_load");
 		notify.notify("Error loading notes");
 	}
+}
+
+function applyNotes(nextNotes: NoteRecord[]): void {
+	allNotes = sortNotesByModifiedDesc(nextNotes);
+	searchIndex = buildSearchIndex(allNotes);
+	renderNotes(pageElements?.searchInput.value ?? "");
 }
 
 function renderNotes(query: string) {
