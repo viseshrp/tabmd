@@ -33,7 +33,7 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - run: pnpm install
-      - run: pnpm lint:webext
+      - run: pnpm build
       - run: pnpm quality
 
   smoke:
@@ -148,4 +148,3 @@ jobs:
           name: tabmd-extension
           path: ${{ steps.zip_path.outputs.path }}
           if-no-files-found: error
-

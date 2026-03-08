@@ -20,7 +20,7 @@ pnpm test
 ### CI Process
 Every pull request on GitHub will automatically trigger the `ci.yml` matrix which invokes:
 - `pnpm install`
-- `pnpm lint:webext`
+- `pnpm build`
 - `pnpm quality`
 - `pnpm smoke`
 - `pnpm exec playwright install --with-deps chromium`
