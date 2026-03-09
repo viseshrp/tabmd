@@ -36,7 +36,7 @@ describe("title actions", () => {
 
 		initTitleActions(null, "# Heading\nBody");
 		expect(display.textContent).toBe("Heading");
-		expect(document.title).toBe("TabMD-Heading");
+		expect(document.title).toBe("TabMD - Heading");
 
 		display.click();
 		expect(display.hidden).toBe(true);
@@ -49,7 +49,7 @@ describe("title actions", () => {
 		expect(display.hidden).toBe(false);
 		expect(input.hidden).toBe(true);
 		expect(display.textContent).toBe("Manual title");
-		expect(document.title).toBe("TabMD-Manual title");
+		expect(document.title).toBe("TabMD - Manual title");
 	});
 
 	it("preloads the visible derived title when editing an auto-titled note", async () => {
@@ -134,7 +134,7 @@ describe("title actions", () => {
 
 		expect(updateNoteTitle).toHaveBeenCalledWith(null);
 		expect(display.textContent).toBe("Derived again");
-		expect(document.title).toBe("TabMD-Derived again");
+		expect(document.title).toBe("TabMD - Derived again");
 	});
 
 	it("updates the browser tab title when external state changes arrive", async () => {
@@ -143,10 +143,10 @@ describe("title actions", () => {
 		);
 
 		initTitleActions("Manual title", "Body");
-		expect(document.title).toBe("TabMD-Manual title");
+		expect(document.title).toBe("TabMD - Manual title");
 
 		applyTitleState(null, "# Synced heading\nBody");
 
-		expect(document.title).toBe("TabMD-Synced heading");
+		expect(document.title).toBe("TabMD - Synced heading");
 	});
 });

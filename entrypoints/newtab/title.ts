@@ -3,7 +3,7 @@ import { updateNoteTitle } from "./save";
 import { getEditorContent } from "./editor";
 
 let currentTitle: string | null = null;
-const TAB_TITLE_PREFIX = "TabMD-";
+const TAB_TITLE_PREFIX = "TabMD - ";
 
 /**
  * The browser tab label should match the same resolved title that the page header shows.
