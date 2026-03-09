@@ -191,7 +191,13 @@ describe("editor focus mode helpers", () => {
 		if (!(previewElement instanceof HTMLDivElement)) {
 			throw new Error("Expected EasyMDE preview to be a div.");
 		}
+		const previewContent = previewElement.querySelector(".tabmd-preview");
+		if (!(previewContent instanceof HTMLDivElement)) {
+			throw new Error("Expected preview content wrapper inside the preview surface.");
+		}
+		expect(previewElement.classList.contains("tabmd-preview")).toBe(false);
 		expect(previewElement.innerHTML).toContain("<h1>First</h1>");
+		expect(previewContent.classList.contains("markdown-body")).toBe(true);
 
 		previewElement.innerHTML = "<p>stale</p>";
 		showPreview();
