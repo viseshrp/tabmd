@@ -11,16 +11,18 @@ describe("preview helpers", () => {
 		expect(html).toContain("hljs-keyword");
 	});
 
-	it("falls back to auto highlighting for unknown languages", () => {
+	it("falls back to plaintext highlighting for unknown languages", () => {
 		const html = renderPreview("```unknownlang\nvalue\n```");
 
-		expect(html).toContain('<pre><code class="hljs">');
+		expect(html).toContain('<pre><code class="hljs language-plaintext">');
 		expect(html).toContain("value");
 	});
 
 	it("renders fenced code blocks without a language", () => {
 		const html = renderPreview("```\nplain text\n```");
 
-		expect(html).toContain('<pre><code class="hljs">plain text');
+		expect(html).toContain(
+			'<pre><code class="hljs language-plaintext">plain text',
+		);
 	});
 });

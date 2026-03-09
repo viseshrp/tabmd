@@ -26,6 +26,44 @@ function parseJsonScalar<T>(value: string | undefined, fallback: T): T {
 	}
 }
 
+/**
+ * Reads one logical line without materializing the full file into an array.
+ * Large backup restores only need to scan the small frontmatter prefix, so a
+ * targeted line reader keeps both runtime and memory proportional to metadata.
+ */
+function readLine(
+	content: string,
+	startIndex: number,
+): { value: string; nextIndex: number } {
+	const lineBreakIndex = content.indexOf("\n", startIndex);
+	const rawLine =
+		lineBreakIndex === -1
+			? content.slice(startIndex)
+			: content.slice(startIndex, lineBreakIndex);
+	const value = rawLine.endsWith("\r") ? rawLine.slice(0, -1) : rawLine;
+
+	return {
+		value,
+		nextIndex: lineBreakIndex === -1 ? content.length : lineBreakIndex + 1,
+	};
+}
+
+/** Creates the plain-Markdown fallback record used when frontmatter is absent or malformed. */
+function createPlainMarkdownNote(
+	content: string,
+	fallbackTimestamp: number,
+): NoteRecord {
+	const timestamp = Math.floor(fallbackTimestamp);
+
+	return {
+		id: crypto.randomUUID(),
+		title: null,
+		content,
+		createdAt: timestamp,
+		modifiedAt: timestamp,
+	};
+}
+
 /** Builds the shared `title-<timestamp>.md` filename used by export and Drive backups. */
 export function createNoteMarkdownFileName(
 	noteTitle: string | null,
@@ -70,55 +108,47 @@ export function parseNoteFromMarkdownFile(
 	fileContent: string,
 	fallbackTimestamp = Date.now(),
 ): NoteRecord {
-	const lines = fileContent.split(/\r?\n/);
-	if (lines[0] !== FRONTMATTER_DELIMITER) {
-		const timestamp = Math.floor(fallbackTimestamp);
-		return {
-			id: crypto.randomUUID(),
-			title: null,
-			content: fileContent,
-			createdAt: timestamp,
-			modifiedAt: timestamp,
-		};
+	const firstLine = readLine(fileContent, 0);
+	if (firstLine.value !== FRONTMATTER_DELIMITER) {
+		return createPlainMarkdownNote(fileContent, fallbackTimestamp);
 	}
 
-	let delimiterIndex = -1;
 	const rawMetadata = new Map<string, string>();
-	for (let index = 1; index < lines.length; index += 1) {
-		const line = lines[index];
-		if (line === FRONTMATTER_DELIMITER) {
-			delimiterIndex = index;
+	let metadataIndex = firstLine.nextIndex;
+	let bodyStartIndex = -1;
+
+	while (metadataIndex < fileContent.length) {
+		const line = readLine(fileContent, metadataIndex);
+		if (line.value === FRONTMATTER_DELIMITER) {
+			bodyStartIndex = line.nextIndex;
 			break;
 		}
 
-		const separatorIndex = line.indexOf(":");
+		const separatorIndex = line.value.indexOf(":");
 		if (separatorIndex <= 0) {
+			metadataIndex = line.nextIndex;
 			continue;
 		}
 
-		const key = line.slice(0, separatorIndex).trim();
-		const value = line.slice(separatorIndex + 1).trim();
+		const key = line.value.slice(0, separatorIndex).trim();
+		const value = line.value.slice(separatorIndex + 1).trim();
 		rawMetadata.set(key, value);
+		metadataIndex = line.nextIndex;
 	}
 
-	if (delimiterIndex === -1) {
-		const timestamp = Math.floor(fallbackTimestamp);
-		return {
-			id: crypto.randomUUID(),
-			title: null,
-			content: fileContent,
-			createdAt: timestamp,
-			modifiedAt: timestamp,
-		};
+	if (bodyStartIndex === -1) {
+		return createPlainMarkdownNote(fileContent, fallbackTimestamp);
 	}
 
 	const idValue = rawMetadata.get("tabmd-id");
 	const titleValue = rawMetadata.get("tabmd-title");
 	const createdAtValue = Number(rawMetadata.get("tabmd-created-at"));
 	const modifiedAtValue = Number(rawMetadata.get("tabmd-modified-at"));
-	const contentStartIndex =
-		lines[delimiterIndex + 1] === "" ? delimiterIndex + 2 : delimiterIndex + 1;
-	const content = lines.slice(contentStartIndex).join("\n");
+	const firstBodyLine = readLine(fileContent, bodyStartIndex);
+	const content =
+		firstBodyLine.value === "" && bodyStartIndex < fileContent.length
+			? fileContent.slice(firstBodyLine.nextIndex)
+			: fileContent.slice(bodyStartIndex);
 	const fallback = Math.floor(fallbackTimestamp);
 
 	return {
