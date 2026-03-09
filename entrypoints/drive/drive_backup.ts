@@ -4,19 +4,23 @@
  * and restore a backup snapshot back into local storage.
  */
 import { normalizeNotesRecord, type NoteRecord } from "../shared/storage";
+import {
+	createNoteMarkdownFileName,
+	parseNoteFromMarkdownFile,
+	serializeNoteToMarkdownFile,
+} from "../shared/note_markdown";
 import { readAllNotes, writeAllNotes } from "../shared/notes";
 import { logExtensionError, runWithConcurrency } from "../shared/utils";
 import {
 	deleteFile,
-	downloadJsonFile,
+	downloadTextFile,
 	getOrCreateFolder,
 	listFiles,
 	listFilesPage,
-	uploadJsonFile,
+	uploadTextFile,
 	type DriveListFilesPage,
 } from "./drive_api";
 import {
-	BACKUP_VERSION,
 	DEFAULT_RETENTION_COUNT,
 	DRIVE_FOLDER_NAME,
 	DRIVE_STORAGE_KEYS,
@@ -27,7 +31,6 @@ import {
 	type DriveBackupEntry,
 	type DriveBackupIndex,
 	type DriveFileRecord,
-	type SerializedBackupPayload,
 } from "./types";
 
 /** Drive REST dependencies are injected so orchestration can stay unit-testable. */
@@ -35,8 +38,8 @@ type DriveApiDeps = {
 	getOrCreateFolder: typeof getOrCreateFolder;
 	listFiles: typeof listFiles;
 	listFilesPage?: typeof listFilesPage;
-	uploadJsonFile: typeof uploadJsonFile;
-	downloadJsonFile: typeof downloadJsonFile;
+	uploadTextFile: typeof uploadTextFile;
+	downloadTextFile: typeof downloadTextFile;
 	deleteFile: typeof deleteFile;
 };
 
@@ -45,13 +48,15 @@ const defaultDeps: DriveApiDeps = {
 	getOrCreateFolder,
 	listFiles,
 	listFilesPage,
-	uploadJsonFile,
-	downloadJsonFile,
+	uploadTextFile,
+	downloadTextFile,
 	deleteFile,
 };
 
 /** Retention deletes run with a small concurrency cap to avoid unbounded request bursts. */
 const RETENTION_DELETE_CONCURRENCY = 4;
+const BACKUP_UPLOAD_CONCURRENCY = 4;
+const RESTORE_DOWNLOAD_CONCURRENCY = 4;
 
 /**
  * Converts raw Drive file metadata into normalized backup rows.
@@ -61,6 +66,13 @@ function toBackupEntries(files: DriveFileRecord[]): DriveBackupEntry[] {
 	const entries = files
 		.filter((file) => typeof file.id === "string" && file.id.length > 0)
 		.map((file) => {
+			const fileName =
+				typeof file.name === "string" ? file.name : "backup-snapshot";
+			const noteCount = extractNoteCountFromFileName(fileName);
+			if (noteCount === 0) {
+				return null;
+			}
+
 			const timestamp =
 				parseDriveTimestamp(file.createdTime) ||
 				parseDriveTimestamp(file.modifiedTime) ||
@@ -69,14 +81,13 @@ function toBackupEntries(files: DriveFileRecord[]): DriveBackupEntry[] {
 
 			return {
 				fileId: file.id,
-				fileName: typeof file.name === "string" ? file.name : "backup.json",
+				fileName,
 				timestamp,
 				size: Number.isFinite(parsedSize) && parsedSize > 0 ? parsedSize : 0,
-				noteCount: extractNoteCountFromFileName(
-					typeof file.name === "string" ? file.name : "",
-				),
+				noteCount,
 			};
-		});
+		})
+		.filter((entry): entry is DriveBackupEntry => entry !== null);
 
 	entries.sort((left, right) => {
 		if (right.timestamp !== left.timestamp) {
@@ -99,20 +110,6 @@ export async function getOrCreateInstallId(): Promise<string> {
 	const created = crypto.randomUUID();
 	await chrome.storage.local.set({ [DRIVE_STORAGE_KEYS.installId]: created });
 	return created;
-}
-
-/** Creates the JSON payload that is uploaded into Drive for one backup snapshot. */
-export function serializeBackup(
-	notes: Record<string, NoteRecord>,
-	installId: string,
-	timestamp = Date.now(),
-): SerializedBackupPayload {
-	return {
-		version: BACKUP_VERSION,
-		timestamp,
-		installId,
-		notes,
-	};
 }
 
 /** Reads the stored retention count, normalizing corrupt or missing values back to defaults. */
@@ -174,7 +171,7 @@ export async function readLocalIndex(): Promise<DriveBackupIndex> {
 		.map((entry) => {
 			const fileId = typeof entry.fileId === "string" ? entry.fileId : "";
 			const fileName =
-				typeof entry.fileName === "string" ? entry.fileName : "backup.json";
+				typeof entry.fileName === "string" ? entry.fileName : "backup-snapshot";
 			const timestamp =
 				typeof entry.timestamp === "number" && Number.isFinite(entry.timestamp)
 					? Math.floor(entry.timestamp)
@@ -286,7 +283,7 @@ export type DriveBackupListPage = {
 
 /**
  * Lists one page of backup metadata for the restore dialog.
- * Only file metadata is returned here; the full JSON payload is downloaded only on restore.
+ * Only file metadata is returned here; the full Markdown snapshot content is downloaded only on restore.
  */
 export async function listDriveBackupsPage(
 	token: string,
@@ -317,8 +314,8 @@ export async function listDriveBackupsPage(
 
 /**
  * Performs a manual backup:
- * read local data, upload a JSON snapshot, enforce retention, refresh the local index,
- * and persist the normalized retention setting that was used.
+ * create one snapshot folder per run, upload one Markdown file per note, enforce retention,
+ * refresh the local index, and persist the normalized retention setting that was used.
  */
 export async function performBackup(
 	token: string,
@@ -330,15 +327,41 @@ export async function performBackup(
 ): Promise<DriveBackupEntry[]> {
 	const installId = await getOrCreateInstallId();
 	const notes = preloaded?.notes ?? (await readAllNotes());
+	const noteEntries = Object.values(notes);
 
 	const timestamp = Date.now();
-	const payload = serializeBackup(notes, installId, timestamp);
-	const content = JSON.stringify(payload, null, 2);
-
 	const installFolderId = await getInstallFolderId(installId, token, deps);
-	const noteCount = Object.keys(notes).length;
-	const fileName = createBackupFileName(timestamp, noteCount);
-	await deps.uploadJsonFile(fileName, content, installFolderId, token);
+	const noteCount = noteEntries.length;
+	const snapshotFolderName = createBackupFileName(timestamp, noteCount);
+	const snapshotFolderId = await deps.getOrCreateFolder(
+		snapshotFolderName,
+		token,
+		installFolderId,
+	);
+
+	/**
+	 * Each note becomes its own Markdown artifact.
+	 * The shared export filename helper keeps local exports and Drive backups aligned.
+	 */
+	await runWithConcurrency(
+		noteEntries,
+		BACKUP_UPLOAD_CONCURRENCY,
+		async (note) => {
+			const fileName = createNoteMarkdownFileName(
+				note.title,
+				note.content,
+				timestamp,
+			);
+			const fileContent = serializeNoteToMarkdownFile(note);
+			await deps.uploadTextFile(
+				fileName,
+				fileContent,
+				"text/markdown",
+				snapshotFolderId,
+				token,
+			);
+		},
+	);
 
 	const retention =
 		typeof requestedRetentionCount === "number"
@@ -360,22 +383,42 @@ export async function performBackup(
 }
 
 /**
- * Downloads a backup payload, validates it, then overwrites local notes.
- * The note dictionary is normalized before write so malformed entries are silently dropped.
+ * Downloads a backup snapshot and overwrites local notes.
+ * Markdown snapshots are restored from all `.md` files inside the selected folder.
  */
 export async function restoreFromBackup(
 	fileId: string,
 	token: string,
-	deps: Pick<DriveApiDeps, "downloadJsonFile"> = defaultDeps,
+	deps: Pick<DriveApiDeps, "listFiles" | "downloadTextFile"> = defaultDeps,
 ): Promise<{ restoredNotes: number }> {
-	const rawPayload = await deps.downloadJsonFile(fileId, token);
-	if (!rawPayload || typeof rawPayload !== "object") {
-		throw new Error("Backup payload is not an object.");
-	}
+	const files = await deps.listFiles(fileId, token);
+	const markdownFiles = files.filter(
+		(file) =>
+			typeof file.id === "string" &&
+			file.id.length > 0 &&
+			typeof file.name === "string" &&
+			file.name.toLowerCase().endsWith(".md"),
+	);
 
-	const notesRaw = (rawPayload as { notes?: unknown }).notes;
-	const notes = normalizeNotesRecord(notesRaw);
+	const restoredEntries: NoteRecord[] = [];
+	await runWithConcurrency(
+		markdownFiles,
+		RESTORE_DOWNLOAD_CONCURRENCY,
+		async (file) => {
+			const content = await deps.downloadTextFile(file.id, token);
+			const fallbackTimestamp =
+				parseDriveTimestamp(file.modifiedTime) ||
+				parseDriveTimestamp(file.createdTime) ||
+				Date.now();
+			restoredEntries.push(
+				parseNoteFromMarkdownFile(content, fallbackTimestamp),
+			);
+		},
+	);
 
+	const notes = normalizeNotesRecord(
+		Object.fromEntries(restoredEntries.map((note) => [note.id, note])),
+	);
 	await writeAllNotes(notes);
 
 	return { restoredNotes: Object.keys(notes).length };

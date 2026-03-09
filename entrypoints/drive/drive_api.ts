@@ -198,19 +198,20 @@ export async function getOrCreateFolder(
 }
 
 /**
- * Uploads a JSON file using Drive's multipart upload endpoint and returns the created metadata.
+ * Uploads a text file using Drive's multipart upload endpoint and returns the created metadata.
  * The boundary uses a UUID so concurrent uploads never collide.
  */
-export async function uploadJsonFile(
+export async function uploadTextFile(
 	name: string,
 	content: string,
+	mimeType: string,
 	folderId: string,
 	token: string,
 ): Promise<DriveFileRecord> {
 	const boundary = `tabmd-${crypto.randomUUID()}`;
 	const metadata = {
 		name,
-		mimeType: "application/json",
+		mimeType,
 		parents: [folderId],
 	};
 
@@ -220,7 +221,7 @@ export async function uploadJsonFile(
 		"",
 		JSON.stringify(metadata),
 		`--${boundary}`,
-		"Content-Type: application/json; charset=UTF-8",
+		`Content-Type: ${mimeType}; charset=UTF-8`,
 		"",
 		content,
 		`--${boundary}--`,
@@ -252,11 +253,11 @@ export async function uploadJsonFile(
 	return created;
 }
 
-/** Downloads and parses a JSON file from Drive using `alt=media`. */
-export async function downloadJsonFile(
+/** Downloads one text file from Drive using `alt=media`. */
+export async function downloadTextFile(
 	fileId: string,
 	token: string,
-): Promise<unknown> {
+): Promise<string> {
 	const response = await fetch(
 		`${DRIVE_API_BASE}/files/${encodeURIComponent(fileId)}?alt=media`,
 		{
@@ -264,9 +265,22 @@ export async function downloadJsonFile(
 			headers: buildAuthHeaders(token),
 		},
 	);
-	return parseJsonResponse<unknown>(response, "Drive download file");
-}
 
+	if (!response.ok) {
+		let details = "";
+		try {
+			details = await response.text();
+		} catch {
+			details = "";
+		}
+
+		throw new Error(
+			`Drive download file failed (${response.status}): ${details}`.trim(),
+		);
+	}
+
+	return response.text();
+}
 /**
  * Deletes a Drive file by ID.
  * `404` is treated as success so retention and manual delete stay idempotent.

@@ -17,10 +17,10 @@ The current implementation is intentionally narrow:
 - Markdown editing with [EasyMDE](https://github.com/Ionaru/easy-markdown-editor)
 - Preview mode using EasyMDE's native preview surface with GitHub-flavored Markdown via `marked`
 - Editor and preview surfaces that fill the remaining workspace area inside the new-tab writing canvas
-- Syntax-highlighted fenced code blocks via `highlight.js`
+- Syntax-highlighted fenced code blocks via `highlight.js`, with deterministic plaintext fallback for unknown or unlabeled fences
 - Automatic note titles derived from the first meaningful line
 - Manual title overrides
-- Export current note as a `.md` file
+- Export current note as a `.md` file named `title-<timestamp>.md`
 - Focus mode that expands the editor to the full workspace while keeping an explicit exit control visible
 - Theme setting with `os`, `light`, and `dark` modes
 - Optional manual Google Drive backup/restore with retention, delete, and restore pagination
@@ -76,6 +76,8 @@ Drive backups stay isolated per extension install. Each install gets a stable lo
 tabmd_backups/<installId>/
 ```
 
+Each backup run creates one snapshot folder there, and each note inside that snapshot is uploaded as its own Markdown file using the same `title-<timestamp>.md` naming pipeline as local export.
+
 That separation lets multiple TabMD installs coexist without mixing backup files in the same Drive folder.
 
 ## Runtime Surfaces
@@ -118,7 +120,7 @@ Responsibilities:
 
 - Load and sort all notes
 - Rerender when note storage changes while the list page is open
-- Search across derived titles and note content using cached normalized metadata per page load
+- Search across derived titles and note content using cached normalized metadata per page load, while deferring full body normalization until a content query needs it
 - Show a snippet for each matching note
 - Rename notes
 - Delete notes
@@ -134,7 +136,7 @@ Responsibilities:
 - Apply the chosen theme immediately
 - Show a snackbar after saves
 - Connect/disconnect Google Drive for manual backups
-- Upload note snapshots to Drive and restore them on demand
+- Upload snapshot folders of per-note Markdown files to Drive and restore them on demand
 - Load the restore list lazily into a dialog
 - Delete individual Drive backups from that dialog
 - Manage retention and explicit restore-dialog pagination
@@ -234,6 +236,7 @@ Current automated coverage focuses on:
 - Title derivation
 - UUID generation
 - Search and snippet selection
+- Large-note search, preview, and markdown-import regressions
 - Notes storage CRUD behavior
 - Export filename sanitization
 - Google Drive auth, Drive REST helpers, backup orchestration, and options-page backup flows
@@ -266,6 +269,18 @@ Current TabMD extension ID from the baked-in key:
 5. Click `Restore from backup` to browse Drive snapshots lazily in the restore dialog.
 6. Use `Previous`, `Next`, and the page-size selector to page through backups.
 7. Click `Restore` to overwrite local notes with the selected snapshot, or `Delete` to remove a Drive backup file without restoring it.
+
+Local export uses the same file naming pipeline:
+
+```text
+<title>-<timestamp>.md
+```
+
+Example:
+
+```text
+test-2026-03-09T13-42-14-254Z.md
+```
 
 ## Known Constraints
 

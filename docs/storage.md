@@ -68,17 +68,19 @@ Remote Drive folder layout:
 tabmd_backups/<installId>/
 ```
 
-### Drive Backup Payload
+### Drive Backup Snapshot Format
 
-Each uploaded Drive backup stores a full snapshot of notes:
+Each uploaded Drive backup stores one snapshot folder. Inside that folder, every note is stored as an individual Markdown file using the shared export filename format:
 
-```typescript
-type SerializedBackupPayload = {
-  version: number;
-  timestamp: number;
-  installId: string;
-  notes: Record<string, NoteRecord>;
-};
+```text
+<title>-<timestamp>.md
 ```
+
+The file body contains Markdown plus a small TabMD frontmatter block so restore can preserve:
+
+- note ID
+- manual title override
+- `createdAt`
+- `modifiedAt`
 
 The options-page restore dialog uses the cached `DriveBackupIndex` for quick local metadata reads when available, but the live restore list is fetched lazily from Drive with explicit pagination controls, delete actions, and on-demand restore downloads.

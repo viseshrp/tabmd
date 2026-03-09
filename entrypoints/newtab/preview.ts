@@ -10,6 +10,18 @@ marked.setOptions({
 
 const renderer = new marked.Renderer();
 
+/**
+ * Uses plaintext highlighting for ambiguous code fences.
+ * `highlightAuto` checks many grammars and becomes disproportionately expensive
+ * for large pasted blocks, while plaintext keeps preview latency predictable.
+ */
+function renderPlainTextCodeBlock(text: string): string {
+	const highlighted = highlight.highlight(text, {
+		language: "plaintext",
+	}).value;
+	return `<pre><code class="hljs language-plaintext">${highlighted}</code></pre>`;
+}
+
 renderer.code = ({ text, lang }: Tokens.Code) => {
 	const normalizedLanguage = lang?.trim().toLowerCase();
 
@@ -20,11 +32,7 @@ renderer.code = ({ text, lang }: Tokens.Code) => {
 		return `<pre><code class="hljs language-${normalizedLanguage}">${highlighted}</code></pre>`;
 	}
 
-	const highlighted = normalizedLanguage
-		? highlight.highlightAuto(text).value
-		: highlight.highlight(text, { language: "plaintext" }).value;
-
-	return `<pre><code class="hljs">${highlighted}</code></pre>`;
+	return renderPlainTextCodeBlock(text);
 };
 
 marked.use({ renderer });

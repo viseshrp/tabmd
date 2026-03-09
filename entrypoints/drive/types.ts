@@ -1,17 +1,12 @@
-/**
- * Shared Drive-backup types and constants used by the backup orchestration,
- * Drive REST client, and options-page UI.
- */
-import type { NoteRecord } from "../shared/storage";
 import {
-	createTabmdBackupFileName,
+	createTabmdBackupSnapshotName,
 	extractNoteCountFromBackupFileName,
 } from "../shared/backup_filename";
 
 /** The root folder used for TabMD backups inside the user's Google Drive. */
 export const DRIVE_FOLDER_NAME = "tabmd_backups";
 
-/** Current schema version for the JSON payload written into each backup file. */
+/** Current metadata version embedded inside each Markdown backup note file. */
 export const BACKUP_VERSION = 1;
 
 /** Default number of remote backups kept per install folder. */
@@ -41,14 +36,6 @@ export type DriveBackupEntry = {
 export type DriveBackupIndex = {
 	installId: string;
 	backups: DriveBackupEntry[];
-};
-
-/** Serialized JSON content stored in each uploaded Google Drive backup file. */
-export type SerializedBackupPayload = {
-	version: number;
-	timestamp: number;
-	installId: string;
-	notes: Record<string, NoteRecord>;
 };
 
 /** Minimal Drive metadata fields required for listing and retention decisions. */
@@ -82,15 +69,15 @@ export function normalizeRetentionCount(
 	return floored;
 }
 
-/** Creates the canonical backup file name with an embedded note count. */
+/** Creates the canonical backup snapshot folder name with an embedded note count. */
 export function createBackupFileName(
 	timestamp: number,
 	noteCount: number,
 ): string {
-	return createTabmdBackupFileName(timestamp, noteCount);
+	return createTabmdBackupSnapshotName(timestamp, noteCount);
 }
 
-/** Extracts the embedded note count from a Drive backup filename. */
+/** Extracts the embedded note count from a Drive backup snapshot name. */
 export function extractNoteCountFromFileName(fileName: string): number {
 	return extractNoteCountFromBackupFileName(fileName);
 }

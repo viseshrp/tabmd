@@ -13,7 +13,10 @@ import {
 	type SearchIndexEntry,
 	type SearchResult,
 } from "./search";
-import { formatTimestamp, logExtensionError } from "../shared/utils";
+import {
+	formatTimestamp,
+	logExtensionError,
+} from "../shared/utils";
 import { createSnackbarNotifier } from "../ui/notifications";
 
 let allNotes: NoteRecord[] = [];

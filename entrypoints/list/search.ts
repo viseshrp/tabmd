@@ -11,7 +11,7 @@ export type SearchIndexEntry = {
 	note: NoteRecord;
 	title: string;
 	normalizedTitle: string;
-	normalizedContent: string;
+	normalizedContent: string | null;
 	defaultSnippet: string;
 };
 
@@ -32,8 +32,9 @@ export function buildSearchIndex(notes: NoteRecord[]): SearchIndexEntry[] {
 			note,
 			title,
 			normalizedTitle: title.toLowerCase(),
-			normalizedContent: note.content.toLowerCase(),
+			normalizedContent: null,
 			// Cache the default snippet once so repeated searches do not rescan the same note content.
+			// Full body normalization stays lazy because copying every large note on page load is expensive.
 			defaultSnippet: getDefaultSnippet(note.content),
 		};
 	});
@@ -57,7 +58,7 @@ export function filterIndexedNotes(
 			continue;
 		}
 
-		if (entry.normalizedContent.includes(normalizedQuery)) {
+		if (getNormalizedContent(entry).includes(normalizedQuery)) {
 			results.push(
 				createSearchResult(
 					entry,
@@ -83,6 +84,18 @@ function createSearchResult(
 		title: entry.title,
 		snippet,
 	};
+}
+
+/**
+ * Populates the lowercase body cache only when a query actually needs content matching.
+ * Title-only searches and empty-list renders avoid duplicating large note bodies in memory.
+ */
+function getNormalizedContent(entry: SearchIndexEntry): string {
+	if (entry.normalizedContent === null) {
+		entry.normalizedContent = entry.note.content.toLowerCase();
+	}
+
+	return entry.normalizedContent;
 }
 
 function getDefaultSnippet(content: string): string {

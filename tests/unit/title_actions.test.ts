@@ -49,6 +49,23 @@ describe("title actions", () => {
 		expect(display.textContent).toBe("Manual title");
 	});
 
+	it("preloads the visible derived title when editing an auto-titled note", async () => {
+		const { initTitleActions } = await import("../../entrypoints/newtab/title");
+		const display = document.getElementById(
+			"note-title-display",
+		) as HTMLHeadingElement;
+		const input = document.getElementById(
+			"note-title-input",
+		) as HTMLInputElement;
+
+		getEditorContent.mockReturnValue("# Derived title\nBody");
+		initTitleActions(null, "# Derived title\nBody");
+
+		display.click();
+
+		expect(input.value).toBe("Derived title");
+	});
+
 	it("reverts the input to the initial title on escape", async () => {
 		const { initTitleActions } = await import("../../entrypoints/newtab/title");
 		const display = document.getElementById(
