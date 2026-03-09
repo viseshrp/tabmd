@@ -17,6 +17,7 @@ pnpm test
 6. Cover preview/editor tab switches with synchronous assertions so a stale preview overlay cannot remain active after returning to the editor.
 7. Keep Google Drive backup coverage split between unit tests for auth/API/orchestration and integration tests for the options-page backup and restore flows.
 8. Add large-input regression tests for note parsing, preview rendering, and list-page search without relying on timing assertions.
+9. Add UI-level integration coverage when a large-input path crosses an entrypoint boundary, so the DOM wiring is verified in addition to the pure helpers.
 
 ### CI Process
 Every pull request on GitHub will automatically trigger the `ci.yml` matrix which invokes:
