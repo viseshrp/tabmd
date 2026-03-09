@@ -7,6 +7,7 @@ import {
 import { resolveNoteTitle } from "../shared/note_title";
 import { readSettings } from "../shared/storage";
 import { POPUP_RECENT_NOTES_LIMIT } from "../shared/ui_limits";
+import { openExtensionPageInWindow } from "../shared/utils";
 
 // WXT flattens page entrypoints into top-level HTML files in the built extension,
 // so runtime navigation must use `list.html` instead of the source folder path.
@@ -90,7 +91,7 @@ async function bootstrap() {
 
 	const btnOptions = document.getElementById("btn-options");
 	btnOptions?.addEventListener("click", () => {
-		chrome.tabs.create({ url: chrome.runtime.getURL("options.html") });
+		void openExtensionPageInWindow("options.html");
 	});
 }
 

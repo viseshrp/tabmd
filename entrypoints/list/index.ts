@@ -13,7 +13,11 @@ import {
 	type SearchIndexEntry,
 	type SearchResult,
 } from "./search";
-import { formatTimestamp, logExtensionError } from "../shared/utils";
+import {
+	formatTimestamp,
+	logExtensionError,
+	openExtensionPageInWindow,
+} from "../shared/utils";
 import { createSnackbarNotifier } from "../ui/notifications";
 
 let allNotes: NoteRecord[] = [];
@@ -59,7 +63,7 @@ async function bootstrap() {
 	});
 
 	document.getElementById("btn-options")?.addEventListener("click", () => {
-		chrome.tabs.create({ url: chrome.runtime.getURL("options.html") });
+		void openExtensionPageInWindow("options.html");
 	});
 }
 

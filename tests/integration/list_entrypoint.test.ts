@@ -82,7 +82,13 @@ describe("list entrypoint", () => {
 		expect(mock.__createdTabs.map((entry) => entry.url)).toEqual([
 			"chrome-extension://mock/newtab.html#beta",
 			"chrome-extension://mock/newtab.html",
-			"chrome-extension://mock/options.html",
+		]);
+		expect(mock.__createdWindows).toEqual([
+			{
+				url: "chrome-extension://mock/options.html",
+				type: "normal",
+				focused: true,
+			},
 		]);
 
 		const searchInput = document.getElementById(

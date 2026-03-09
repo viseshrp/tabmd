@@ -14,6 +14,7 @@ import { initSaveTracking, replaceTrackedNote, saveCurrentNote } from "./save";
 import { applyTitleState, getCommittedTitle, initTitleActions } from "./title";
 import { performExport } from "./export";
 import { readSettings } from "../shared/storage";
+import { openExtensionPageInWindow } from "../shared/utils";
 
 import "./style.css";
 
@@ -116,7 +117,7 @@ async function bootstrap() {
 
 	const btnOptions = document.getElementById("btn-options");
 	btnOptions?.addEventListener("click", () => {
-		chrome.tabs.create({ url: chrome.runtime.getURL("options.html") });
+		void openExtensionPageInWindow("options.html");
 	});
 }
 

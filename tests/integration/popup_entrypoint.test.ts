@@ -68,7 +68,13 @@ describe("popup entrypoint", () => {
 			"chrome-extension://mock/newtab.html#25",
 			// The built extension exposes the list page at the root as `list.html`.
 			"chrome-extension://mock/list.html",
-			"chrome-extension://mock/options.html",
+		]);
+		expect(mock.__createdWindows).toEqual([
+			{
+				url: "chrome-extension://mock/options.html",
+				type: "normal",
+				focused: true,
+			},
 		]);
 	});
 

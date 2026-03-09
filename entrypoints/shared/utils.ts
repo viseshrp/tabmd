@@ -28,6 +28,18 @@ export function formatTimestamp(timestamp: number): string {
 }
 
 /**
+ * Settings is a dedicated management surface, so it should open in its own browser window
+ * instead of being mixed into the user's note tabs.
+ */
+export async function openExtensionPageInWindow(path: string): Promise<void> {
+	await chrome.windows.create({
+		url: chrome.runtime.getURL(path),
+		type: "normal",
+		focused: true,
+	});
+}
+
+/**
  * Executes async work with a small worker pool so callers can bound concurrency
  * without falling back to serialized loops or unbounded `Promise.all`.
  */
