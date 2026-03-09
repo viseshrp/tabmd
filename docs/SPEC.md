@@ -137,8 +137,8 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
 **Layout:**
 - **Title area** at the top. Displays the derived or manual title. The editable title field is hidden by default. Clicking the title area reveals the editable field.
 - **Tab bar** (center-top) with exactly two tabs: **Editor** | **Preview**. Only one is visible at a time.
-- **Editor area** — EasyMDE instance, filling the available space below the tab bar.
-- **Preview area** (same position as editor, toggled visibility) — rendered Markdown HTML.
+- **Editor area** — EasyMDE instance, filling the remaining width and height below the tab bar inside the writing card.
+- **Preview area** (same position as editor, toggled visibility) — rendered Markdown HTML filling that same remaining workspace area.
 - **Toolbar actions** — Focus mode toggle, export, link to options page.
 
 **Behavior:**

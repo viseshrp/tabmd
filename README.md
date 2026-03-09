@@ -16,6 +16,7 @@ The current implementation is intentionally narrow:
 
 - Markdown editing with [EasyMDE](https://github.com/Ionaru/easy-markdown-editor)
 - Preview mode using EasyMDE's native preview surface with GitHub-flavored Markdown via `marked`
+- Editor and preview surfaces that fill the remaining workspace area inside the new-tab writing canvas
 - Syntax-highlighted fenced code blocks via `highlight.js`
 - Automatic note titles derived from the first meaningful line
 - Manual title overrides
@@ -90,7 +91,7 @@ Responsibilities:
 - Initialize the EasyMDE editor
 - Save content and title changes immediately on editor or title edits
 - Reconcile with `chrome.storage.onChanged` so open surfaces stay in sync
-- Toggle Editor and Preview tabs through EasyMDE's native preview mode
+- Toggle Editor and Preview tabs through EasyMDE's native preview mode while keeping both surfaces stretched to the remaining workspace area
 - Export the current note
 - Open the options page
 

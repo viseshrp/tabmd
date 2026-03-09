@@ -184,6 +184,7 @@ body {
 }
 
 .main-content {
+  display: grid;
   min-height: 0;
   overflow: hidden;
 }
@@ -238,23 +239,37 @@ body.focus-mode-active .main-content {
 .editor-frame {
   position: relative;
   height: 100%;
+  min-height: 0;
   overflow: hidden;
 }
 
 .view-container {
   position: absolute;
   inset: 0;
-  overflow-y: auto;
-}
-
-.EasyMDEContainer {
-  height: 100%;
   display: flex;
-  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
-.EasyMDEContainer .CodeMirror {
-  flex: 1;
+/* EasyMDE ships its own layout defaults, so the wrapper selector must beat those defaults for the editor to inherit the full card size. */
+#editor-container > .EasyMDEContainer {
+  width: 100%;
+  height: 100%;
+  display: flex !important;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* CodeMirror is the actual writing surface, so it must inherit the full workspace box rather than collapsing to its text content. */
+#editor-container > .EasyMDEContainer > .CodeMirror {
+  width: 100%;
+  flex: 1 1 auto;
+  height: 100% !important;
+  min-width: 0;
+  min-height: 0;
   border: 0;
   border-radius: 0;
   background-color: transparent;
@@ -267,10 +282,15 @@ body.focus-mode-active .main-content {
 
 body.focus-mode-active .EasyMDEContainer .CodeMirror {
   padding-top: 88px;
+  display: flex;
+  flex-direction: column;
 }
 
-.EasyMDEContainer .CodeMirror-scroll {
-  min-height: 100%;
+/* EasyMDE injects an inline 300px minimum scroll height; overriding that keeps the editor from stopping halfway down the card. */
+#editor-container > .EasyMDEContainer > .CodeMirror .CodeMirror-scroll {
+  flex: 1 1 auto;
+  height: 100% !important;
+  min-height: 100% !important;
 }
 
 .EasyMDEContainer .CodeMirror-cursor {
@@ -292,7 +312,10 @@ body.focus-mode-active .EasyMDEContainer .CodeMirror {
 }
 
 .EasyMDEContainer .editor-preview-full {
+  position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
   overflow-y: auto;
   background: transparent;
 }
@@ -304,8 +327,7 @@ body.focus-mode-active .EasyMDEContainer .CodeMirror {
 
 /* EasyMDE owns the preview surface, and these classes keep it visually aligned with the writing canvas. */
 .EasyMDEContainer .tabmd-preview {
-  max-width: 880px;
-  margin: 0 auto;
+  width: 100%;
   padding: 30px 40px 48px;
   box-sizing: border-box;
   min-height: 100%;
