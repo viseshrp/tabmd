@@ -22,6 +22,7 @@ The current implementation is intentionally narrow:
 - Automatic note titles derived from the first meaningful line
 - Browser tab titles that follow the resolved note title
 - Manual title overrides
+- Copy current note text directly from the toolbar
 - Export current note as a `.md` file named `title-<timestamp>.md`
 - Focus mode that expands the editor to the full workspace while keeping an explicit exit control visible
 - Theme setting with `os`, `light`, and `dark` modes
@@ -98,6 +99,7 @@ Responsibilities:
 - Reconcile with `chrome.storage.onChanged` so open surfaces stay in sync
 - Toggle Editor and Preview tabs through EasyMDE's native preview mode while keeping both surfaces stretched to the remaining workspace area
 - Keep preview mode on a single scroll surface so the hidden editor scroller does not remain visible behind rendered Markdown
+- Copy the current editor text to the system clipboard with inline feedback
 - Export the current note
 - Open the options page
 

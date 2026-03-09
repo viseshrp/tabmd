@@ -14,6 +14,8 @@ import { initSaveTracking, replaceTrackedNote, saveCurrentNote } from "./save";
 import { applyTitleState, getCommittedTitle, initTitleActions } from "./title";
 import { performExport } from "./export";
 import { readSettings } from "../shared/storage";
+import { createSnackbarNotifier } from "../ui/notifications";
+import { copyEditorText } from "./copy";
 
 import "./style.css";
 
@@ -57,6 +59,7 @@ async function bootstrap() {
 	initEditor(note.content);
 	initTitleActions(note.title, note.content);
 	initSaveTracking(note);
+	const notify = createSnackbarNotifier(document.getElementById("snackbar"));
 
 	// Editor edits must update the derived title before saving so every surface receives the same resolved title state.
 	subscribeToEditorContentChanges((content) => {
@@ -112,6 +115,12 @@ async function bootstrap() {
 	const btnExport = document.getElementById("btn-export");
 	btnExport?.addEventListener("click", () => {
 		performExport(getCommittedTitle(), getEditorContent());
+	});
+
+	const btnCopy = document.getElementById("btn-copy");
+	btnCopy?.addEventListener("click", () => {
+		// Copy always reads from the editor model so preview mode and title edits cannot desynchronize the exported text.
+		void copyEditorText(getEditorContent(), notify);
 	});
 
 	const btnOptions = document.getElementById("btn-options");

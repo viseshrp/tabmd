@@ -208,6 +208,7 @@ body.focus-mode-active .header-top {
 
 body.focus-mode-active .title-panel,
 body.focus-mode-active .tab-bar,
+body.focus-mode-active #btn-copy,
 body.focus-mode-active #btn-export,
 body.focus-mode-active #btn-options {
   display: none;
@@ -427,6 +428,27 @@ body.focus-mode-active .EasyMDEContainer .tabmd-preview {
 
 .markdown-body table tr:nth-child(2n) {
   background-color: rgba(var(--md-sys-color-outline-rgb), 0.06);
+}
+
+.snackbar {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--md-sys-color-on-surface);
+  color: var(--md-sys-color-surface);
+  padding: 14px 24px;
+  border-radius: 28px;
+  font-size: 14px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  box-shadow: var(--md-sys-elevation-2);
+}
+
+.snackbar.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
 [data-theme="dark"] .hljs {
