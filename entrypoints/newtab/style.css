@@ -338,6 +338,14 @@ body.focus-mode-active .EasyMDEContainer .CodeMirror {
   overflow: hidden !important;
 }
 
+/* CodeMirror renders scrollbar rails outside .CodeMirror-scroll, so preview mode must hide those companion elements too. */
+.EasyMDEContainer .CodeMirror.tabmd-preview-mode .CodeMirror-vscrollbar,
+.EasyMDEContainer .CodeMirror.tabmd-preview-mode .CodeMirror-hscrollbar,
+.EasyMDEContainer .CodeMirror.tabmd-preview-mode .CodeMirror-scrollbar-filler,
+.EasyMDEContainer .CodeMirror.tabmd-preview-mode .CodeMirror-gutter-filler {
+  display: none !important;
+}
+
 /* Preview mode should swap surfaces, not stack them, so the editor chrome is fully hidden while preview is active. */
 .EasyMDEContainer .CodeMirror.tabmd-preview-mode > :not(.editor-preview-full) {
   display: none;
