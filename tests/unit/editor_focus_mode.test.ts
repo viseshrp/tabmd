@@ -10,16 +10,40 @@ class MockEasyMDE {
 		previewClass?: string | readonly string[];
 		previewRender?: (markdownPlaintext: string) => string | null;
 	} | null = null;
+	static lastInstance: MockEasyMDE | null = null;
+
+	private readonly scrollListeners = new Set<() => void>();
+	private readonly scrollInfo = {
+		top: 0,
+		height: 1000,
+		clientHeight: 250,
+	};
 
 	codemirror = {
 		focus: mockFocus,
+		getScrollInfo: () => ({ ...this.scrollInfo }),
 		getWrapperElement: () => this.wrapperElement,
 		on: (eventName: string, handler: () => void) => {
 			if (eventName === "change") {
 				this.changeListeners.add(handler);
+				return;
+			}
+
+			if (eventName === "scroll") {
+				this.scrollListeners.add(handler);
 			}
 		},
 		refresh: mockRefresh,
+		scrollTo: (_left: number | null, top?: number) => {
+			if (typeof top !== "number") {
+				return;
+			}
+
+			this.scrollInfo.top = top;
+			for (const listener of this.scrollListeners) {
+				listener();
+			}
+		},
 	};
 
 	private readonly changeListeners = new Set<() => void>();
@@ -35,6 +59,7 @@ class MockEasyMDE {
 		},
 	) {
 		MockEasyMDE.lastOptions = options;
+		MockEasyMDE.lastInstance = this;
 		this.currentValue = options.initialValue ?? "";
 		this.wrapperElement = document.createElement("div");
 		this.previewElement = document.createElement("div");
@@ -61,6 +86,14 @@ class MockEasyMDE {
 
 	isPreviewActive(): boolean {
 		return this.previewElement.classList.contains("editor-preview-active");
+	}
+
+	setScrollMetrics(nextScrollInfo: Partial<typeof this.scrollInfo>): void {
+		Object.assign(this.scrollInfo, nextScrollInfo);
+	}
+
+	getScrollTop(): number {
+		return this.scrollInfo.top;
 	}
 
 	static togglePreview(editor: MockEasyMDE): void {
@@ -93,6 +126,7 @@ describe("editor focus mode helpers", () => {
 		mockFocus.mockReset();
 		mockRefresh.mockReset();
 		MockEasyMDE.lastOptions = null;
+		MockEasyMDE.lastInstance = null;
 		document.body.className = "";
 		document.body.innerHTML = `
       <button id="btn-focus" aria-label="Toggle Focus Mode"></button>
@@ -203,6 +237,46 @@ describe("editor focus mode helpers", () => {
 		showPreview();
 
 		expect(previewElement.innerHTML).toContain("<h1>First</h1>");
+	});
+
+	it("keeps editor and preview scroll positions synchronized by proportional progress", async () => {
+		const { initEditor, showPreview } = await import(
+			"../../entrypoints/newtab/editor"
+		);
+
+		initEditor("# Draft");
+		showPreview();
+
+		const previewElement = document.querySelector(
+			".editor-preview-full",
+		) as HTMLDivElement;
+		const mockEditor = MockEasyMDE.lastInstance;
+		if (!(mockEditor instanceof MockEasyMDE)) {
+			throw new Error("Expected mock editor instance.");
+		}
+
+		Object.defineProperty(previewElement, "clientHeight", {
+			configurable: true,
+			value: 300,
+		});
+		Object.defineProperty(previewElement, "scrollHeight", {
+			configurable: true,
+			value: 1800,
+		});
+
+		mockEditor.setScrollMetrics({
+			top: 300,
+			height: 1200,
+			clientHeight: 300,
+		});
+		mockEditor.codemirror.scrollTo(null, 300);
+
+		expect(previewElement.scrollTop).toBeCloseTo(500, 5);
+
+		previewElement.scrollTop = 900;
+		previewElement.dispatchEvent(new Event("scroll"));
+
+		expect(mockEditor.getScrollTop()).toBeCloseTo(540, 5);
 	});
 
 	it("removes the preview overlay as soon as the editor tab becomes active again", async () => {

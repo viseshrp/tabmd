@@ -8,6 +8,8 @@ const PREVIEW_MODE_CLASS = "tabmd-preview-mode";
 const PREVIEW_SURFACE_CLASS = "editor-preview-full";
 const PREVIEW_CLASS_NAMES = ["markdown-body", "tabmd-preview"] as const;
 const PREVIEW_CONTENT_CLASS_NAME = PREVIEW_CLASS_NAMES.join(" ");
+const SCROLL_SYNC_TOLERANCE_PX = 1;
+const PREVIEW_SCROLL_SYNC_ATTRIBUTE = "data-tabmd-preview-scroll-sync";
 
 let editorInstance: EasyMDE | null = null;
 let container: HTMLElement | null = null;
@@ -75,6 +77,18 @@ function getEditorWrapper(): HTMLElement | null {
 	return editorInstance?.codemirror.getWrapperElement() ?? null;
 }
 
+function attachPreviewScrollListener(previewElement: HTMLElement): void {
+	if (previewElement.hasAttribute(PREVIEW_SCROLL_SYNC_ATTRIBUTE)) {
+		return;
+	}
+
+	// Preview scroll is a real user interaction surface, so feed that position back into the editor without timers.
+	previewElement.addEventListener("scroll", () => {
+		syncEditorScrollFromPreview();
+	});
+	previewElement.setAttribute(PREVIEW_SCROLL_SYNC_ATTRIBUTE, "true");
+}
+
 function getOrCreatePreviewElement(): HTMLElement | null {
 	if (!editorInstance) {
 		return null;
@@ -82,6 +96,7 @@ function getOrCreatePreviewElement(): HTMLElement | null {
 
 	const existingPreview = getPreviewElement();
 	if (existingPreview) {
+		attachPreviewScrollListener(existingPreview);
 		return existingPreview;
 	}
 
@@ -89,12 +104,94 @@ function getOrCreatePreviewElement(): HTMLElement | null {
 	// ourselves keeps tab switches synchronous so Preview cannot re-activate after the user returns to Editor.
 	const previewElement = document.createElement("div");
 	previewElement.classList.add(PREVIEW_SURFACE_CLASS);
+	attachPreviewScrollListener(previewElement);
 	editorInstance.codemirror.getWrapperElement().append(previewElement);
 	return previewElement;
 }
 
 function isPreviewActive(): boolean {
 	return getPreviewElement()?.classList.contains(PREVIEW_ACTIVE_CLASS) ?? false;
+}
+
+function getScrollableDistance(
+	scrollExtent: number,
+	viewportExtent: number,
+): number {
+	return Math.max(scrollExtent - viewportExtent, 0);
+}
+
+function getScrollRatio(scrollOffset: number, scrollableDistance: number): number {
+	if (scrollableDistance <= 0) {
+		return 0;
+	}
+
+	return Math.min(Math.max(scrollOffset / scrollableDistance, 0), 1);
+}
+
+function syncPreviewScrollFromEditor(): void {
+	if (!editorInstance) {
+		return;
+	}
+
+	const previewElement = getPreviewElement();
+	if (!previewElement) {
+		return;
+	}
+
+	const editorScrollInfo = editorInstance.codemirror.getScrollInfo();
+	const editorScrollableDistance = getScrollableDistance(
+		editorScrollInfo.height,
+		editorScrollInfo.clientHeight,
+	);
+	const previewScrollableDistance = getScrollableDistance(
+		previewElement.scrollHeight,
+		previewElement.clientHeight,
+	);
+	const nextPreviewScrollTop =
+		getScrollRatio(editorScrollInfo.top, editorScrollableDistance) *
+		previewScrollableDistance;
+
+	if (
+		Math.abs(previewElement.scrollTop - nextPreviewScrollTop) <=
+		SCROLL_SYNC_TOLERANCE_PX
+	) {
+		return;
+	}
+
+	previewElement.scrollTop = nextPreviewScrollTop;
+}
+
+function syncEditorScrollFromPreview(): void {
+	if (!editorInstance) {
+		return;
+	}
+
+	const previewElement = getPreviewElement();
+	if (!previewElement) {
+		return;
+	}
+
+	const editorScrollInfo = editorInstance.codemirror.getScrollInfo();
+	const editorScrollableDistance = getScrollableDistance(
+		editorScrollInfo.height,
+		editorScrollInfo.clientHeight,
+	);
+	const previewScrollableDistance = getScrollableDistance(
+		previewElement.scrollHeight,
+		previewElement.clientHeight,
+	);
+	const nextEditorScrollTop =
+		getScrollRatio(previewElement.scrollTop, previewScrollableDistance) *
+		editorScrollableDistance;
+
+	if (
+		Math.abs(editorScrollInfo.top - nextEditorScrollTop) <=
+		SCROLL_SYNC_TOLERANCE_PX
+	) {
+		return;
+	}
+
+	editorInstance.codemirror.scrollTo(null, nextEditorScrollTop);
 }
 
 function renderPreviewSurface(markdownPlaintext: string): string {
@@ -115,6 +212,7 @@ function syncPreviewContent(): void {
 
 	// Repeated Preview clicks should refresh the same EasyMDE preview surface with the latest Markdown.
 	previewElement.innerHTML = renderPreviewSurface(editorInstance.value());
+	syncPreviewScrollFromEditor();
 }
 
 function notifyContentChangeListeners(content: string): void {
@@ -158,6 +256,10 @@ export function initEditor(initialContent: string): EasyMDE {
 		}
 
 		notifyContentChangeListeners(editorInstance?.value() ?? "");
+	});
+	// Keeping preview aligned to the editor scroll position makes view switches deterministic instead of jumping.
+	editorInstance.codemirror.on("scroll", () => {
+		syncPreviewScrollFromEditor();
 	});
 
 	return editorInstance;
@@ -249,6 +351,7 @@ export function setPreviewMode(nextActive: boolean): boolean {
 	previewElement.classList.toggle(PREVIEW_ACTIVE_CLASS, nextActive);
 	if (nextActive) {
 		previewElement.innerHTML = renderPreviewSurface(editorInstance.value());
+		syncPreviewScrollFromEditor();
 		return true;
 	}
 

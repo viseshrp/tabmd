@@ -7,11 +7,23 @@ const mockRefresh = vi.fn();
 class MockEasyMDE {
 	static lastInstance: MockEasyMDE | null = null;
 
+	private readonly scrollInfo = {
+		top: 0,
+		height: 1000,
+		clientHeight: 250,
+	};
+
 	codemirror = {
 		focus: mockFocus,
+		getScrollInfo: () => ({ ...this.scrollInfo }),
 		getWrapperElement: () => this.wrapperElement,
 		on: () => undefined,
 		refresh: mockRefresh,
+		scrollTo: (_left: number | null, top?: number) => {
+			if (typeof top === "number") {
+				this.scrollInfo.top = top;
+			}
+		},
 	};
 
 	private readonly previewElement: HTMLDivElement;
