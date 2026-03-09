@@ -253,16 +253,6 @@ export async function uploadTextFile(
 	return created;
 }
 
-/** Convenience wrapper for uploading JSON files through the shared text upload path. */
-export async function uploadJsonFile(
-	name: string,
-	content: string,
-	folderId: string,
-	token: string,
-): Promise<DriveFileRecord> {
-	return uploadTextFile(name, content, "application/json", folderId, token);
-}
-
 /** Downloads one text file from Drive using `alt=media`. */
 export async function downloadTextFile(
 	fileId: string,
@@ -291,15 +281,6 @@ export async function downloadTextFile(
 
 	return response.text();
 }
-
-/** Downloads and parses a JSON file from Drive using `alt=media`. */
-export async function downloadJsonFile(
-	fileId: string,
-	token: string,
-): Promise<unknown> {
-	return JSON.parse(await downloadTextFile(fileId, token)) as unknown;
-}
-
 /**
  * Deletes a Drive file by ID.
  * `404` is treated as success so retention and manual delete stay idempotent.

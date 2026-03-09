@@ -14,16 +14,13 @@ import { logExtensionError, runWithConcurrency } from "../shared/utils";
 import {
 	deleteFile,
 	downloadTextFile,
-	downloadJsonFile,
 	getOrCreateFolder,
 	listFiles,
 	listFilesPage,
 	uploadTextFile,
-	uploadJsonFile,
 	type DriveListFilesPage,
 } from "./drive_api";
 import {
-	BACKUP_VERSION,
 	DEFAULT_RETENTION_COUNT,
 	DRIVE_FOLDER_NAME,
 	DRIVE_STORAGE_KEYS,
@@ -34,7 +31,6 @@ import {
 	type DriveBackupEntry,
 	type DriveBackupIndex,
 	type DriveFileRecord,
-	type SerializedBackupPayload,
 } from "./types";
 
 /** Drive REST dependencies are injected so orchestration can stay unit-testable. */
@@ -43,9 +39,7 @@ type DriveApiDeps = {
 	listFiles: typeof listFiles;
 	listFilesPage?: typeof listFilesPage;
 	uploadTextFile: typeof uploadTextFile;
-	uploadJsonFile: typeof uploadJsonFile;
 	downloadTextFile: typeof downloadTextFile;
-	downloadJsonFile: typeof downloadJsonFile;
 	deleteFile: typeof deleteFile;
 };
 
@@ -55,9 +49,7 @@ const defaultDeps: DriveApiDeps = {
 	listFiles,
 	listFilesPage,
 	uploadTextFile,
-	uploadJsonFile,
 	downloadTextFile,
-	downloadJsonFile,
 	deleteFile,
 };
 
@@ -120,20 +112,6 @@ export async function getOrCreateInstallId(): Promise<string> {
 	return created;
 }
 
-/** Creates the legacy JSON payload shape so older backups remain restorable. */
-export function serializeBackup(
-	notes: Record<string, NoteRecord>,
-	installId: string,
-	timestamp = Date.now(),
-): SerializedBackupPayload {
-	return {
-		version: BACKUP_VERSION,
-		timestamp,
-		installId,
-		notes,
-	};
-}
-
 /** Reads the stored retention count, normalizing corrupt or missing values back to defaults. */
 export async function readRetentionCount(): Promise<number> {
 	const raw = await chrome.storage.local.get([
@@ -193,7 +171,7 @@ export async function readLocalIndex(): Promise<DriveBackupIndex> {
 		.map((entry) => {
 			const fileId = typeof entry.fileId === "string" ? entry.fileId : "";
 			const fileName =
-				typeof entry.fileName === "string" ? entry.fileName : "backup.json";
+				typeof entry.fileName === "string" ? entry.fileName : "backup-snapshot";
 			const timestamp =
 				typeof entry.timestamp === "number" && Number.isFinite(entry.timestamp)
 					? Math.floor(entry.timestamp)
@@ -305,7 +283,7 @@ export type DriveBackupListPage = {
 
 /**
  * Lists one page of backup metadata for the restore dialog.
- * Only file metadata is returned here; the full JSON payload is downloaded only on restore.
+ * Only file metadata is returned here; the full Markdown snapshot content is downloaded only on restore.
  */
 export async function listDriveBackupsPage(
 	token: string,
@@ -407,29 +385,12 @@ export async function performBackup(
 /**
  * Downloads a backup snapshot and overwrites local notes.
  * Markdown snapshots are restored from all `.md` files inside the selected folder.
- * Legacy JSON snapshots remain supported so existing backups do not become unreadable.
  */
 export async function restoreFromBackup(
 	fileId: string,
 	token: string,
-	fileName?: string,
-	deps: Pick<
-		DriveApiDeps,
-		"listFiles" | "downloadTextFile" | "downloadJsonFile"
-	> = defaultDeps,
+	deps: Pick<DriveApiDeps, "listFiles" | "downloadTextFile"> = defaultDeps,
 ): Promise<{ restoredNotes: number }> {
-	if (typeof fileName === "string" && fileName.endsWith(".json")) {
-		const rawPayload = await deps.downloadJsonFile(fileId, token);
-		if (!rawPayload || typeof rawPayload !== "object") {
-			throw new Error("Backup payload is not an object.");
-		}
-
-		const notesRaw = (rawPayload as { notes?: unknown }).notes;
-		const notes = normalizeNotesRecord(notesRaw);
-		await writeAllNotes(notes);
-		return { restoredNotes: Object.keys(notes).length };
-	}
-
 	const files = await deps.listFiles(fileId, token);
 	const markdownFiles = files.filter(
 		(file) =>

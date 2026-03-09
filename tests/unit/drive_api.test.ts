@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
 	deleteFile,
 	downloadTextFile,
-	downloadJsonFile,
 	getOrCreateFolder,
 	listFiles,
 	listFilesPage,
@@ -20,7 +19,7 @@ describe("drive api helpers", () => {
 			.mockResolvedValueOnce(
 				new Response(
 					JSON.stringify({
-						files: [{ id: "f1", name: "backup-a.json" }],
+						files: [{ id: "f1", name: "tabmd-backup-2026-03-09T13-42-14-254Z-n1" }],
 						nextPageToken: "next-1",
 					}),
 					{ status: 200, headers: { "Content-Type": "application/json" } },
@@ -29,7 +28,7 @@ describe("drive api helpers", () => {
 			.mockResolvedValueOnce(
 				new Response(
 					JSON.stringify({
-						files: [{ id: "f1", name: "backup-a.json" }],
+						files: [{ id: "f1", name: "tabmd-backup-2026-03-09T13-42-14-254Z-n1" }],
 						nextPageToken: "next-1",
 					}),
 					{ status: 200, headers: { "Content-Type": "application/json" } },
@@ -38,7 +37,7 @@ describe("drive api helpers", () => {
 			.mockResolvedValueOnce(
 				new Response(
 					JSON.stringify({
-						files: [{ id: "f2", name: "backup-b.json" }],
+						files: [{ id: "f2", name: "tabmd-backup-2026-03-08T13-42-14-254Z-n1" }],
 					}),
 					{ status: 200, headers: { "Content-Type": "application/json" } },
 				),
@@ -46,13 +45,15 @@ describe("drive api helpers", () => {
 		vi.stubGlobal("fetch", fetchMock);
 
 		const firstPage = await listFilesPage("folder-1", "token-1");
-		expect(firstPage.files).toEqual([{ id: "f1", name: "backup-a.json" }]);
+		expect(firstPage.files).toEqual([
+			{ id: "f1", name: "tabmd-backup-2026-03-09T13-42-14-254Z-n1" },
+		]);
 		expect(firstPage.nextPageToken).toBe("next-1");
 
 		const allFiles = await listFiles("folder-1", "token-1");
 		expect(allFiles).toEqual([
-			{ id: "f1", name: "backup-a.json" },
-			{ id: "f2", name: "backup-b.json" },
+			{ id: "f1", name: "tabmd-backup-2026-03-09T13-42-14-254Z-n1" },
+			{ id: "f2", name: "tabmd-backup-2026-03-08T13-42-14-254Z-n1" },
 		]);
 	});
 
@@ -94,14 +95,14 @@ describe("drive api helpers", () => {
 		expect(fetchMock).toHaveBeenCalledTimes(2);
 	});
 
-	it("uploads text files and downloads both text and JSON payloads", async () => {
+	it("uploads and downloads markdown note files", async () => {
 		const fetchMock = vi
 			.fn()
 			.mockResolvedValueOnce(
 				new Response(
 					JSON.stringify({
 						id: "file-1",
-						name: "tabmd-backup.json",
+						name: "note-2026-03-09T13-42-14-254Z.md",
 						size: "128",
 					}),
 					{ status: 200, headers: { "Content-Type": "application/json" } },
@@ -111,12 +112,6 @@ describe("drive api helpers", () => {
 				new Response("# Markdown backup", {
 					status: 200,
 					headers: { "Content-Type": "text/markdown" },
-				}),
-			)
-			.mockResolvedValueOnce(
-				new Response(JSON.stringify({ notes: {} }), {
-					status: 200,
-					headers: { "Content-Type": "application/json" },
 				}),
 			);
 		vi.stubGlobal("fetch", fetchMock);
@@ -139,10 +134,6 @@ describe("drive api helpers", () => {
 		await expect(downloadTextFile("file-1", "token-1")).resolves.toBe(
 			"# Markdown backup",
 		);
-
-		await expect(downloadJsonFile("file-1", "token-1")).resolves.toEqual({
-			notes: {},
-		});
 	});
 
 	it("ignores 404 deletes and throws on other failures", async () => {

@@ -38,14 +38,6 @@ export type DriveBackupIndex = {
 	backups: DriveBackupEntry[];
 };
 
-/** Legacy JSON snapshot payload kept only so older Drive backups remain restorable. */
-export type SerializedBackupPayload = {
-	version: number;
-	timestamp: number;
-	installId: string;
-	notes: Record<string, import("../shared/storage").NoteRecord>;
-};
-
 /** Minimal Drive metadata fields required for listing and retention decisions. */
 export type DriveFileRecord = {
 	id: string;

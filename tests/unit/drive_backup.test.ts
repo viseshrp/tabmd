@@ -9,12 +9,10 @@ import {
 	readLocalIndex,
 	readRetentionCount,
 	restoreFromBackup,
-	serializeBackup,
 	updateLocalIndex,
 	writeRetentionCount,
 } from "../../entrypoints/drive/drive_backup";
 import {
-	BACKUP_VERSION,
 	DRIVE_STORAGE_KEYS,
 	createBackupFileName,
 	extractNoteCountFromFileName,
@@ -37,25 +35,7 @@ describe("drive backup orchestration", () => {
 		expect(mock.__storageData[DRIVE_STORAGE_KEYS.installId]).toBe(generated);
 	});
 
-	it("serializes the legacy JSON payload and shared helper values", () => {
-		const payload = serializeBackup(
-			{
-				"note-1": {
-					id: "note-1",
-					content: "Hello",
-					title: null,
-					createdAt: 1,
-					modifiedAt: 2,
-				},
-			},
-			"install-1",
-			1700000000000,
-		);
-
-		expect(payload.version).toBe(BACKUP_VERSION);
-		expect(payload.installId).toBe("install-1");
-		expect(payload.timestamp).toBe(1700000000000);
-		expect(Object.keys(payload.notes)).toEqual(["note-1"]);
+	it("shares the canonical filename and retention helper values", () => {
 		expect(createBackupFileName(1700000000000, 4)).toBe(
 			"tabmd-backup-2023-11-14T22-13-20-000Z-n4",
 		);
@@ -191,13 +171,7 @@ describe("drive backup orchestration", () => {
 			uploadTextFile: async () => {
 				throw new Error("not used");
 			},
-			uploadJsonFile: async () => {
-				throw new Error("not used");
-			},
 			downloadTextFile: async () => {
-				throw new Error("not used");
-			},
-			downloadJsonFile: async () => {
 				throw new Error("not used");
 			},
 			deleteFile: async () => {
@@ -349,13 +323,7 @@ describe("drive backup orchestration", () => {
 						modifiedTime: "2026-03-09T13:42:14.254Z",
 					};
 				},
-				uploadJsonFile: async () => {
-					throw new Error("not used");
-				},
 				downloadTextFile: async () => {
-					throw new Error("not used");
-				},
-				downloadJsonFile: async () => {
 					throw new Error("not used");
 				},
 				deleteFile: async () => undefined,
@@ -404,7 +372,6 @@ describe("drive backup orchestration", () => {
 		const restored = await restoreFromBackup(
 			"snapshot-folder",
 			"token-1",
-			"tabmd-backup-2026-03-09T13-42-14-254Z-n2",
 			{
 				listFiles: async () => [
 					{
@@ -444,9 +411,6 @@ describe("drive backup orchestration", () => {
 						"Second",
 					].join("\n");
 				},
-				downloadJsonFile: async () => {
-					throw new Error("not used");
-				},
 			},
 		);
 
@@ -459,36 +423,6 @@ describe("drive backup orchestration", () => {
 		expect(mock.__storageData[STORAGE_KEYS.settings]).toEqual({
 			theme: "light",
 		});
-	});
-
-	it("restores legacy JSON snapshots for backward compatibility", async () => {
-		const mock = createMockChrome();
-		setMockChrome(mock);
-
-		const restored = await restoreFromBackup(
-			"legacy-file",
-			"token-1",
-			"tabmd-backup-2026-03-09T13-42-14-254Z-n1.json",
-			{
-				listFiles: async () => [],
-				downloadTextFile: async () => {
-					throw new Error("not used");
-				},
-				downloadJsonFile: async () => ({
-					notes: {
-						"note-2": {
-							id: "note-2",
-							content: "Restored",
-							title: "Restored title",
-							createdAt: 10,
-							modifiedAt: 11,
-						},
-					},
-				}),
-			},
-		);
-
-		expect(restored.restoredNotes).toBe(1);
 	});
 
 	it("uses local backups first and falls back to Drive when the cache is empty", async () => {
@@ -545,13 +479,7 @@ describe("drive backup orchestration", () => {
 				uploadTextFile: async () => {
 					throw new Error("not used");
 				},
-				uploadJsonFile: async () => {
-					throw new Error("not used");
-				},
 				downloadTextFile: async () => {
-					throw new Error("not used");
-				},
-				downloadJsonFile: async () => {
 					throw new Error("not used");
 				},
 				deleteFile: async () => {
@@ -590,13 +518,7 @@ describe("drive backup orchestration", () => {
 				uploadTextFile: async () => {
 					throw new Error("not used");
 				},
-				uploadJsonFile: async () => {
-					throw new Error("not used");
-				},
 				downloadTextFile: async () => {
-					throw new Error("not used");
-				},
-				downloadJsonFile: async () => {
 					throw new Error("not used");
 				},
 				deleteFile: async () => {
@@ -604,25 +526,5 @@ describe("drive backup orchestration", () => {
 				},
 			}),
 		).resolves.toEqual([]);
-	});
-
-	it("throws on malformed legacy restore payloads", async () => {
-		const mock = createMockChrome();
-		setMockChrome(mock);
-
-		await expect(
-			restoreFromBackup(
-				"file-1",
-				"token-1",
-				"tabmd-backup-2026-03-09T13-42-14-254Z-n1.json",
-				{
-					listFiles: async () => [],
-					downloadTextFile: async () => {
-						throw new Error("not used");
-					},
-					downloadJsonFile: async () => "invalid",
-				},
-			),
-		).rejects.toThrow("Backup payload is not an object.");
 	});
 });

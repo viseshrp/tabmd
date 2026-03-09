@@ -29,12 +29,9 @@ export function createTabmdBackupSnapshotName(
 	return `${TABMD_BACKUP_FILE_PREFIX}-${timestampSegment}-n${normalizedNoteCount}`;
 }
 
-/**
- * Extracts the `-n<noteCount>` suffix from a snapshot folder or legacy JSON file name.
- * Supporting both shapes keeps older JSON snapshots restorable after the Markdown migration.
- */
+/** Extracts the `-n<noteCount>` suffix from a snapshot folder name. */
 export function extractNoteCountFromBackupFileName(fileName: string): number {
-	const match = /-n(\d+)(?:\.json)?$/i.exec(fileName);
+	const match = /-n(\d+)$/i.exec(fileName);
 	if (!match) {
 		return 0;
 	}

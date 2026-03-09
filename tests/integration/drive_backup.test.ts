@@ -161,7 +161,7 @@ describe("drive backup integration", () => {
 				return new Response(
 					JSON.stringify({
 						id: "new-file",
-						name: "uploaded.json",
+						name: "uploaded-note-2026-03-09T13-42-14-254Z.md",
 						createdTime: "2024-01-02T00:00:00.000Z",
 						size: "100",
 					}),
@@ -278,7 +278,7 @@ describe("drive backup integration", () => {
 						files: [
 							{
 								id: "fallback-file",
-								name: "tabmd-backup-fallback-n4.json",
+								name: "tabmd-backup-fallback-n4",
 								createdTime: "2024-01-02T00:00:00.000Z",
 								size: "2048",
 							},
@@ -379,7 +379,7 @@ describe("drive backup integration", () => {
 						files: [
 							{
 								id: "fallback-file",
-								name: "tabmd-backup-fallback-n4.json",
+								name: "tabmd-backup-fallback-n4",
 								createdTime: "2024-01-02T00:00:00.000Z",
 								size: "2048",
 							},
@@ -825,7 +825,7 @@ describe("drive backup integration", () => {
 						files: [
 							{
 								id: "f3",
-								name: "tabmd-backup-third-n2.json",
+								name: "tabmd-backup-third-n2",
 								createdTime: "2024-01-03T00:00:00.000Z",
 								size: "30",
 							},
@@ -843,13 +843,13 @@ describe("drive backup integration", () => {
 						files: [
 							{
 								id: "f1",
-								name: "tabmd-backup-first-n1.json",
+								name: "tabmd-backup-first-n1",
 								createdTime: "2024-01-01T00:00:00.000Z",
 								size: "10",
 							},
 							{
 								id: "f2",
-								name: "tabmd-backup-second-n1.json",
+								name: "tabmd-backup-second-n1",
 								createdTime: "2024-01-02T00:00:00.000Z",
 								size: "20",
 							},
@@ -956,7 +956,7 @@ describe("drive backup integration", () => {
 		const createFiles = (count: number) =>
 			Array.from({ length: count }, (_, index) => ({
 				id: `f${index + 1}`,
-				name: `tabmd-backup-${index + 1}-n1.json`,
+				name: `tabmd-backup-${index + 1}-n1`,
 				createdTime: `2024-01-${String(index + 1).padStart(2, "0")}T00:00:00.000Z`,
 				size: String(10 + index),
 			}));
@@ -1055,13 +1055,13 @@ describe("drive backup integration", () => {
 						files: [
 							{
 								id: "f1",
-								name: "tabmd-backup-first-n1.json",
+								name: "tabmd-backup-first-n1",
 								createdTime: "2024-01-01T00:00:00.000Z",
 								size: "10",
 							},
 							{
 								id: "f2",
-								name: "tabmd-backup-second-n1.json",
+								name: "tabmd-backup-second-n1",
 								createdTime: "2024-01-02T00:00:00.000Z",
 								size: "20",
 							},
@@ -1163,7 +1163,7 @@ describe("drive backup integration", () => {
 							files: [
 								{
 									id: "f1",
-									name: "tabmd-backup-first-n1.json",
+									name: "tabmd-backup-first-n1",
 									createdTime: "2024-01-01T00:00:00.000Z",
 									size: "10",
 								},
@@ -1248,7 +1248,7 @@ describe("drive backup integration", () => {
 							files: [
 								{
 									id: "f1",
-									name: "tabmd-backup-first-n1.json",
+									name: "tabmd-backup-first-n1",
 									createdTime: "2024-01-01T00:00:00.000Z",
 									size: "10",
 								},
@@ -1318,7 +1318,7 @@ describe("drive backup integration", () => {
 							files: [
 								{
 									id: "f2",
-									name: "tabmd-backup-second-n1.json",
+									name: "tabmd-backup-second-n1",
 									createdTime: "2024-01-02T00:00:00.000Z",
 									size: "20",
 								},
@@ -1337,7 +1337,7 @@ describe("drive backup integration", () => {
 							files: [
 								{
 									id: "f1",
-									name: "tabmd-backup-first-n1.json",
+									name: "tabmd-backup-first-n1",
 									createdTime: "2024-01-01T00:00:00.000Z",
 									size: "10",
 								},
@@ -1420,7 +1420,7 @@ describe("drive backup integration", () => {
 							files: [
 								{
 									id: "f1",
-									name: "tabmd-backup-first-n1.json",
+									name: "tabmd-backup-first-n1",
 									createdTime: "2024-01-01T00:00:00.000Z",
 									size: "10",
 								},
@@ -1493,7 +1493,7 @@ describe("drive backup integration", () => {
 							files: [
 								{
 									id: "f2",
-									name: "tabmd-backup-second-n1.json",
+									name: "tabmd-backup-second-n1",
 									createdTime: "2024-01-02T00:00:00.000Z",
 									size: "20",
 								},
@@ -1515,7 +1515,7 @@ describe("drive backup integration", () => {
 							files: [
 								{
 									id: "f1",
-									name: "tabmd-backup-first-n1.json",
+									name: "tabmd-backup-first-n1",
 									createdTime: "2024-01-01T00:00:00.000Z",
 									size: "10",
 								},
@@ -1596,7 +1596,7 @@ describe("drive backup integration", () => {
 							files: [
 								{
 									id: "f1",
-									name: "tabmd-backup-first-n1.json",
+									name: "tabmd-backup-first-n1",
 									createdTime: "2024-01-01T00:00:00.000Z",
 									size: "10",
 								},

@@ -244,7 +244,7 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
 - Drive auth status is checked non-interactively on load.
 - Drive backup uploads all notes as individual Markdown files inside one snapshot folder.
 - Restore-list metadata is loaded lazily only when the user opens the restore dialog.
-- Restore replaces local notes with the selected backup payload.
+- Restore replaces local notes with the selected Markdown snapshot contents.
 - Delete removes only the selected Drive backup file.
 - The baked-in manifest key gives TabMD its own stable extension ID, so the OAuth client must be configured for that specific ID.
 - Reachable from: popup, full list page, new tab editor page.

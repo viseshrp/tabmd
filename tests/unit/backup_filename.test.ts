@@ -33,7 +33,7 @@ describe("backup filename helpers", () => {
 		expect(
 			formatBackupTimestampSegment(Date.UTC(2026, 2, 7, 12, 30, 5, 9)),
 		).toBe("2026-03-07T12-30-05-009Z");
-		expect(extractNoteCountFromBackupFileName("foreign-backup.json")).toBe(0);
+		expect(extractNoteCountFromBackupFileName("foreign-backup")).toBe(0);
 		expect(extractNoteCountFromBackupFileName("tabmd-backup-x-n0")).toBe(0);
 	});
 });
