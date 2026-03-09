@@ -25,6 +25,38 @@ describe("note markdown helpers", () => {
 		});
 	});
 
+	it("parses quoted frontmatter scalars and preserves markdown body exactly", () => {
+		const parsed = parseNoteFromMarkdownFile(
+			[
+				"---",
+				"tabmd-version: 1",
+				'tabmd-id: "note-\\"quoted\\""',
+				'tabmd-title: "Title with : colon and \\"quotes\\""',
+				"tabmd-created-at: 101",
+				"tabmd-modified-at: 202",
+				"---",
+				"",
+				"# Heading",
+				"",
+				"- bullet",
+				"```ts",
+				'console.log("ok")',
+				"```",
+			].join("\n"),
+			999,
+		);
+
+		expect(parsed).toEqual({
+			id: 'note-"quoted"',
+			title: 'Title with : colon and "quotes"',
+			content: ['# Heading', '', '- bullet', '```ts', 'console.log("ok")', "```"].join(
+				"\n",
+			),
+			createdAt: 101,
+			modifiedAt: 202,
+		});
+	});
+
 	it("falls back to a plain markdown note when frontmatter is missing", () => {
 		const parsed = parseNoteFromMarkdownFile("# Plain note", 42);
 		expect(parsed.content).toBe("# Plain note");
