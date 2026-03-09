@@ -98,15 +98,21 @@ body {
   align-content: start;
   grid-auto-rows: max-content;
   overflow-y: auto;
+  /* Long note titles can contain one unbroken token, so clamp horizontal overflow here and let the link ellipsis own truncation. */
+  overflow-x: hidden;
 }
 
 .note-item {
+  /* Grid items default to an intrinsic minimum width, which can force the popup wider than its card when titles are very long. */
+  min-width: 0;
   border-radius: var(--md-sys-shape-corner-medium);
 }
 
 /* Each note is presented as a lightweight card so the same visual language carries into the compact popup. */
 .note-link {
   display: block;
+  width: 100%;
+  max-width: 100%;
   padding: 14px 16px;
   border: 1px solid rgba(var(--md-sys-color-outline-rgb), 0.18);
   border-radius: inherit;
