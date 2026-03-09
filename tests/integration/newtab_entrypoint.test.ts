@@ -20,6 +20,7 @@ const applyTitleState = vi.fn();
 const getCommittedTitle = vi.fn(() => null);
 const initTitleActions = vi.fn();
 const performExport = vi.fn();
+const copyEditorText = vi.fn();
 const generateUUID = vi.fn(() => "generated-id");
 const readNote = vi.fn();
 const subscribeToNotes = vi.fn();
@@ -51,6 +52,10 @@ vi.mock("../../entrypoints/newtab/title", () => ({
 
 vi.mock("../../entrypoints/newtab/export", () => ({
 	performExport,
+}));
+
+vi.mock("../../entrypoints/newtab/copy", () => ({
+	copyEditorText,
 }));
 
 vi.mock("../../entrypoints/shared/uuid", () => ({
@@ -87,6 +92,7 @@ describe("newtab entrypoint", () => {
 		getCommittedTitle.mockReturnValue(null);
 		initTitleActions.mockReset();
 		performExport.mockReset();
+		copyEditorText.mockReset();
 		generateUUID.mockReset();
 		generateUUID.mockReturnValue("generated-id");
 		readNote.mockReset();
@@ -98,12 +104,14 @@ describe("newtab entrypoint", () => {
       <button id="tab-editor" class="active"></button>
       <button id="tab-preview"></button>
       <button id="btn-focus"></button>
+      <button id="btn-copy"></button>
       <button id="btn-export"></button>
       <button id="btn-options"></button>
       <div id="editor-container"></div>
       <h1 id="note-title-display"></h1>
       <input id="note-title-input" hidden />
       <textarea id="editor-textarea"></textarea>
+      <div id="snackbar"></div>
     `;
 
 		window.history.replaceState(null, "", "/newtab.html");
@@ -159,6 +167,12 @@ describe("newtab entrypoint", () => {
 			document.getElementById("tab-preview")?.classList.contains("active"),
 		).toBe(false);
 		expect(showEditor).toHaveBeenCalled();
+
+		document.getElementById("btn-copy")?.dispatchEvent(new MouseEvent("click"));
+		expect(copyEditorText).toHaveBeenCalledWith(
+			"Editor body",
+			expect.objectContaining({ notify: expect.any(Function) }),
+		);
 
 		document
 			.getElementById("btn-export")
