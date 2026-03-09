@@ -20,6 +20,7 @@ The current implementation is intentionally narrow:
 - Preview mode constrained to one active scroll surface so the hidden editor scroller never duplicates the preview scrollbar
 - Syntax-highlighted fenced code blocks via `highlight.js`, with deterministic plaintext fallback for unknown or unlabeled fences
 - Automatic note titles derived from the first meaningful line
+- Browser tab titles that follow the resolved note title
 - Manual title overrides
 - Export current note as a `.md` file named `title-<timestamp>.md`
 - Focus mode that expands the editor to the full workspace while keeping an explicit exit control visible

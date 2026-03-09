@@ -4,6 +4,23 @@ import { getEditorContent } from "./editor";
 
 let currentTitle: string | null = null;
 
+/**
+ * The browser tab label should match the same resolved title that the page header shows.
+ * Keeping both surfaces behind one helper prevents them from drifting apart as content changes.
+ */
+function syncResolvedTitle(title: string | null, content: string): void {
+	const resolvedTitle = resolveNoteTitle({ title, content });
+	const display = document.getElementById(
+		"note-title-display",
+	) as HTMLHeadingElement | null;
+
+	if (display) {
+		display.textContent = resolvedTitle;
+	}
+
+	document.title = resolvedTitle;
+}
+
 export function initTitleActions(
 	initialTitle: string | null,
 	initialContent: string,
@@ -84,11 +101,7 @@ function commitTitle(
 }
 
 export function syncTitleDisplay(title: string | null, content: string) {
-	const display = document.getElementById(
-		"note-title-display",
-	) as HTMLHeadingElement;
-	if (!display) return;
-	display.textContent = resolveNoteTitle({ title, content });
+	syncResolvedTitle(title, content);
 }
 
 /**
