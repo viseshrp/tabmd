@@ -113,6 +113,8 @@ body {
   display: block;
   width: 100%;
   max-width: 100%;
+  /* Border-box sizing keeps the card inside the row, so ellipsis is computed from the live popup width instead of overflowing past it. */
+  box-sizing: border-box;
   padding: 14px 16px;
   border: 1px solid rgba(var(--md-sys-color-outline-rgb), 0.18);
   border-radius: inherit;
