@@ -3,8 +3,6 @@ import "easymde/dist/easymde.min.css";
 import { renderPreview } from "./preview";
 
 const FOCUS_MODE_CLASS = "focus-mode-active";
-const FENCE_LINE_PATTERN = /^\s*([`~]{3,})\s*$/;
-const FENCE_START_PATTERN = /^\s*[`~]{3,}/;
 const PREVIEW_ACTIVE_CLASS = "editor-preview-active";
 const PREVIEW_MODE_CLASS = "tabmd-preview-mode";
 const PREVIEW_SURFACE_CLASS = "editor-preview-full";
@@ -118,40 +116,6 @@ function notifyContentChangeListeners(content: string): void {
 	}
 }
 
-function shouldSeparatePastedFenceBlock(pastedText: string): boolean {
-	if (!editorInstance || pastedText.length === 0 || !FENCE_START_PATTERN.test(pastedText)) {
-		return false;
-	}
-
-	if (editorInstance.codemirror.somethingSelected()) {
-		return false;
-	}
-
-	const cursor = editorInstance.codemirror.getCursor();
-	const currentLine = editorInstance.codemirror.getLine(cursor.line);
-
-	// Back-to-back fenced block pastes merge into one Markdown fence when the first block ends without a trailing
-	// newline. Only insert a separator when the caret is sitting on a closing fence line to preserve normal paste behavior.
-	return cursor.ch === currentLine.length && FENCE_LINE_PATTERN.test(currentLine);
-}
-
-function registerFencePasteHandler(): void {
-	const editorWrapper = getEditorWrapper();
-	if (!editorInstance || !editorWrapper) {
-		return;
-	}
-
-	editorWrapper.addEventListener("paste", (event: ClipboardEvent) => {
-		const pastedText = event.clipboardData?.getData("text/plain") ?? "";
-		if (!shouldSeparatePastedFenceBlock(pastedText)) {
-			return;
-		}
-
-		event.preventDefault();
-		editorInstance?.codemirror.replaceSelection(`\n${pastedText}`, "end", "paste");
-	});
-}
-
 export function initEditor(initialContent: string): EasyMDE {
 	const textarea = document.getElementById("editor-textarea");
 	if (!(textarea instanceof HTMLTextAreaElement)) {
@@ -188,7 +152,6 @@ export function initEditor(initialContent: string): EasyMDE {
 
 		notifyContentChangeListeners(editorInstance?.value() ?? "");
 	});
-	registerFencePasteHandler();
 
 	return editorInstance;
 }
