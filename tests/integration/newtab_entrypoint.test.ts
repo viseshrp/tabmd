@@ -169,13 +169,11 @@ describe("newtab entrypoint", () => {
 			.getElementById("btn-options")
 			?.dispatchEvent(new MouseEvent("click"));
 		const mockChrome = chrome as typeof globalThis.chrome & {
-			__createdWindows: chrome.windows.CreateData[];
+			__createdTabs: chrome.tabs.CreateProperties[];
 		};
-		expect(mockChrome.__createdWindows.at(-1)).toEqual({
-			url: "chrome-extension://mock/options.html",
-			type: "normal",
-			focused: true,
-		});
+		expect(mockChrome.__createdTabs.at(-1)?.url).toBe(
+			"chrome-extension://mock/options.html",
+		);
 	});
 
 	it("loads an existing note from the hash when present", async () => {

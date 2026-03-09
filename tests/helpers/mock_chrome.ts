@@ -9,7 +9,6 @@ type StorageListener = (
 export type MockChrome = {
 	__storageData: StorageRecord;
 	__createdTabs: chrome.tabs.CreateProperties[];
-	__createdWindows: chrome.windows.CreateData[];
 	runtime: {
 		getURL: (path: string) => string;
 		id: string;
@@ -42,9 +41,6 @@ export type MockChrome = {
 		) => Promise<chrome.tabs.Tab>;
 	};
 	windows: {
-		create: (
-			createData: chrome.windows.CreateData,
-		) => Promise<chrome.windows.Window>;
 		update: (
 			windowId: number,
 			updateInfo: chrome.windows.UpdateInfo,
@@ -87,13 +83,11 @@ export function createMockChrome(options?: {
 	const actionListeners: Array<(...args: unknown[]) => void> = [];
 	const storageListeners = new Set<StorageListener>();
 	const createdTabs: chrome.tabs.CreateProperties[] = [];
-	const createdWindows: chrome.windows.CreateData[] = [];
 	let cachedAuthToken = "mock-auth-token";
 
 	return {
 		__storageData: storageData,
 		__createdTabs: createdTabs,
-		__createdWindows: createdWindows,
 		runtime: {
 			id: "mock-extension-id",
 			getURL: (path: string) => `chrome-extension://mock/${path}`,
@@ -169,14 +163,6 @@ export function createMockChrome(options?: {
 			},
 		},
 		windows: {
-			async create(createData: chrome.windows.CreateData) {
-				createdWindows.push(createData);
-				return {
-					id: 1,
-					focused: createData.focused ?? true,
-					type: createData.type ?? "normal",
-				} as chrome.windows.Window;
-			},
 			async update(windowId: number) {
 				return { id: windowId, focused: true } as chrome.windows.Window;
 			},

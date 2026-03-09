@@ -16,7 +16,6 @@ import {
 import {
 	formatTimestamp,
 	logExtensionError,
-	openExtensionPageInWindow,
 } from "../shared/utils";
 import { createSnackbarNotifier } from "../ui/notifications";
 
@@ -63,7 +62,7 @@ async function bootstrap() {
 	});
 
 	document.getElementById("btn-options")?.addEventListener("click", () => {
-		void openExtensionPageInWindow("options.html");
+		chrome.tabs.create({ url: chrome.runtime.getURL("options.html") });
 	});
 }
 
