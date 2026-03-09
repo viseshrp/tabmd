@@ -87,10 +87,12 @@ describe("editor layout bootstrap", () => {
 		showPreview();
 
 		const previewElement = document.querySelector(".editor-preview-full");
+		const previewContent = previewElement?.querySelector(".tabmd-preview");
 		expect(previewElement).not.toBeNull();
 		expect(previewElement?.parentElement?.classList.contains("EasyMDEContainer")).toBe(true);
 		expect(previewElement?.classList.contains("editor-preview-active")).toBe(true);
-		expect(previewElement?.classList.contains("tabmd-preview")).toBe(true);
-		expect(previewElement?.classList.contains("markdown-body")).toBe(true);
+		expect(previewContent).not.toBeNull();
+		expect(previewContent?.classList.contains("tabmd-preview")).toBe(true);
+		expect(previewContent?.classList.contains("markdown-body")).toBe(true);
 	});
 });

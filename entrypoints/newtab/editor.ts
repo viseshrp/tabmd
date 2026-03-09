@@ -7,6 +7,7 @@ const PREVIEW_ACTIVE_CLASS = "editor-preview-active";
 const PREVIEW_MODE_CLASS = "tabmd-preview-mode";
 const PREVIEW_SURFACE_CLASS = "editor-preview-full";
 const PREVIEW_CLASS_NAMES = ["markdown-body", "tabmd-preview"] as const;
+const PREVIEW_CONTENT_CLASS_NAME = PREVIEW_CLASS_NAMES.join(" ");
 
 let editorInstance: EasyMDE | null = null;
 let container: HTMLElement | null = null;
@@ -87,13 +88,19 @@ function getOrCreatePreviewElement(): HTMLElement | null {
 	// EasyMDE's built-in preview toggle applies the active class on a timer. Creating the preview surface
 	// ourselves keeps tab switches synchronous so Preview cannot re-activate after the user returns to Editor.
 	const previewElement = document.createElement("div");
-	previewElement.classList.add(PREVIEW_SURFACE_CLASS, ...PREVIEW_CLASS_NAMES);
+	previewElement.classList.add(PREVIEW_SURFACE_CLASS);
 	editorInstance.codemirror.getWrapperElement().append(previewElement);
 	return previewElement;
 }
 
 function isPreviewActive(): boolean {
 	return getPreviewElement()?.classList.contains(PREVIEW_ACTIVE_CLASS) ?? false;
+}
+
+function renderPreviewSurface(markdownPlaintext: string): string {
+	// Keeping the scroll container separate from the padded Markdown body avoids a permanent right-side gutter
+	// that can look like a second scrollbar while the real preview thumb is moving.
+	return `<div class="${PREVIEW_CONTENT_CLASS_NAME}">${renderPreview(markdownPlaintext)}</div>`;
 }
 
 function syncPreviewContent(): void {
@@ -107,7 +114,7 @@ function syncPreviewContent(): void {
 	}
 
 	// Repeated Preview clicks should refresh the same EasyMDE preview surface with the latest Markdown.
-	previewElement.innerHTML = renderPreview(editorInstance.value());
+	previewElement.innerHTML = renderPreviewSurface(editorInstance.value());
 }
 
 function notifyContentChangeListeners(content: string): void {
@@ -241,7 +248,7 @@ export function setPreviewMode(nextActive: boolean): boolean {
 	editorWrapper.classList.toggle(PREVIEW_MODE_CLASS, nextActive);
 	previewElement.classList.toggle(PREVIEW_ACTIVE_CLASS, nextActive);
 	if (nextActive) {
-		previewElement.innerHTML = renderPreview(editorInstance.value());
+		previewElement.innerHTML = renderPreviewSurface(editorInstance.value());
 		return true;
 	}
 
