@@ -11,7 +11,7 @@ TabMD is a local-first Chrome MV3 extension. It uses the `wxt` framework to bund
    Provides a quick dropdown listing a bounded set of the most recently modified notes. Reads them completely in-memory upon popup click, but keeps only a small configured top-N list instead of sorting the full collection. Can't write or delete notes — defers editing and deleting actions to dedicated pages. The built extension serves this entrypoint as `popup.html`.
 
 3. **Full List Page** (`entrypoints/list/index.ts`)
-   An unlisted page designated for browsing all saved notes. Builds a normalized search index once per load so each query only performs containment checks and snippet extraction over the cached note set. Displays UI cards with snippets. The built extension serves this entrypoint as `list.html`, which is the URL popup navigation must open.
+   An unlisted page designated for browsing all saved notes. Builds a search index once per load, caches derived titles and snippets immediately, and defers lowercasing full note bodies until a content query actually needs that work. Displays UI cards with snippets. The built extension serves this entrypoint as `list.html`, which is the URL popup navigation must open.
 
 4. **Options Page** (`entrypoints/options/settings_page.ts`)
    Handles visual theme preference (OS, Light, Dark mode) plus optional Google Drive connect/backup/restore actions. The restore list is loaded lazily into a dialog so the page avoids Drive network work until the user explicitly asks for backup history.

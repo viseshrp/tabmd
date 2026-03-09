@@ -17,7 +17,7 @@ The current implementation is intentionally narrow:
 - Markdown editing with [EasyMDE](https://github.com/Ionaru/easy-markdown-editor)
 - Preview mode using EasyMDE's native preview surface with GitHub-flavored Markdown via `marked`
 - Editor and preview surfaces that fill the remaining workspace area inside the new-tab writing canvas
-- Syntax-highlighted fenced code blocks via `highlight.js`
+- Syntax-highlighted fenced code blocks via `highlight.js`, with deterministic plaintext fallback for unknown or unlabeled fences
 - Automatic note titles derived from the first meaningful line
 - Manual title overrides
 - Export current note as a `.md` file named `title-<timestamp>.md`
@@ -120,7 +120,7 @@ Responsibilities:
 
 - Load and sort all notes
 - Rerender when note storage changes while the list page is open
-- Search across derived titles and note content using cached normalized metadata per page load
+- Search across derived titles and note content using cached normalized metadata per page load, while deferring full body normalization until a content query needs it
 - Show a snippet for each matching note
 - Rename notes
 - Delete notes
@@ -236,6 +236,7 @@ Current automated coverage focuses on:
 - Title derivation
 - UUID generation
 - Search and snippet selection
+- Large-note search, preview, and markdown-import regressions
 - Notes storage CRUD behavior
 - Export filename sanitization
 - Google Drive auth, Drive REST helpers, backup orchestration, and options-page backup flows
