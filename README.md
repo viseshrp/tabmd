@@ -17,6 +17,7 @@ The current implementation is intentionally narrow:
 - Markdown editing with [EasyMDE](https://github.com/Ionaru/easy-markdown-editor)
 - Preview mode using EasyMDE's native preview surface with GitHub-flavored Markdown via `marked`
 - Editor and preview surfaces that fill the remaining workspace area inside the new-tab writing canvas
+- Preview mode constrained to one active scroll surface so the hidden editor scroller never duplicates the preview scrollbar
 - Syntax-highlighted fenced code blocks via `highlight.js`, with deterministic plaintext fallback for unknown or unlabeled fences
 - Automatic note titles derived from the first meaningful line
 - Manual title overrides
@@ -25,6 +26,7 @@ The current implementation is intentionally narrow:
 - Theme setting with `os`, `light`, and `dark` modes
 - Optional manual Google Drive backup/restore with retention, delete, and restore pagination
 - Recent-notes popup limited to a small configurable set of the most recently edited notes
+- Recent-notes popup titles truncated with a single-line ellipsis instead of horizontal scrolling
 - Full notes page with client-side search across titles and body content
 
 ## Product Model
@@ -94,6 +96,7 @@ Responsibilities:
 - Save content and title changes immediately on editor or title edits
 - Reconcile with `chrome.storage.onChanged` so open surfaces stay in sync
 - Toggle Editor and Preview tabs through EasyMDE's native preview mode while keeping both surfaces stretched to the remaining workspace area
+- Keep preview mode on a single scroll surface so the hidden editor scroller does not remain visible behind rendered Markdown
 - Export the current note
 - Open the options page
 
@@ -108,6 +111,7 @@ Responsibilities:
 - Rerender when note storage changes while the popup is open
 - Select the configured recent-notes popup cap without fully sorting the complete collection
 - Render the configured recent-notes popup cap
+- Truncate oversized recent-note titles with a single-line ellipsis so the popup never grows a horizontal scrollbar
 - Open the selected note in a new tab
 - Navigate to the full list page or options page
 

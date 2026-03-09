@@ -316,8 +316,25 @@ body.focus-mode-active .EasyMDEContainer .CodeMirror {
   inset: 0;
   width: 100%;
   height: 100%;
+  display: none;
   overflow-y: auto;
   background: transparent;
+}
+
+/* Only the active preview surface should scroll; hiding the inactive overlay avoids duplicate scrollbar affordances. */
+.EasyMDEContainer .editor-preview-full.editor-preview-active {
+  display: block;
+}
+
+/* Preview mode should hand scrolling to the rendered Markdown surface, not the hidden CodeMirror scroller underneath it. */
+.EasyMDEContainer .CodeMirror.tabmd-preview-mode {
+  overflow: hidden;
+  padding: 0;
+}
+
+/* CodeMirror keeps its own scroll container even when the editor chrome is hidden, so disable that scroller while preview is visible. */
+.EasyMDEContainer .CodeMirror.tabmd-preview-mode .CodeMirror-scroll {
+  overflow: hidden !important;
 }
 
 /* Preview mode should swap surfaces, not stack them, so the editor chrome is fully hidden while preview is active. */
