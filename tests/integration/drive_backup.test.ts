@@ -107,7 +107,7 @@ describe("drive backup integration", () => {
 					backups: [
 						{
 							fileId: "seed-file",
-							fileName: "tabmd-backup-seed-n1.json",
+							fileName: "tabmd-backup-seed-n1",
 							timestamp: 1700000000000,
 							size: 12,
 							noteCount: 1,
@@ -144,7 +144,7 @@ describe("drive backup integration", () => {
 						files: [
 							{
 								id: "new-file",
-								name: "tabmd-backup-2024-01-02T00-00-00-000Z-n1.json",
+								name: "tabmd-backup-2024-01-02T00-00-00-000Z-n1",
 								createdTime: "2024-01-02T00:00:00.000Z",
 								size: "100",
 							},
@@ -196,6 +196,12 @@ describe("drive backup integration", () => {
 		);
 
 		expect(getDriveStatus().textContent).toContain("Backup completed");
+		const uploadCalls = fetchMock.mock.calls.filter((call) =>
+			String(call.at(0) ?? "").includes("/upload/drive/v3/files"),
+		);
+		expect(uploadCalls.length).toBeGreaterThan(0);
+		expect(String(uploadCalls[0]?.[1]?.body ?? "")).toContain(".md");
+		expect(String(uploadCalls[0]?.[1]?.body ?? "")).toContain("text/markdown");
 	});
 
 	it("skips upload when there are no notes to back up", async () => {
@@ -1684,7 +1690,7 @@ describe("drive backup integration", () => {
 					backups: [
 						{
 							fileId: "seed-file",
-							fileName: "tabmd-backup-seed-n1.json",
+							fileName: "tabmd-backup-seed-n1",
 							timestamp: 1700000000000,
 							size: 12,
 							noteCount: 1,
@@ -1716,13 +1722,31 @@ describe("drive backup integration", () => {
 						headers: { "Content-Type": "application/json" },
 					});
 				}
+				if (url.includes("seed-file") && url.includes("parents")) {
+					return new Response(
+						JSON.stringify({
+							files: [
+								{
+									id: "seed-note-1",
+									name: "Restored title-2024-01-02T00-00-00-000Z.md",
+									createdTime: "2024-01-02T00:00:00.000Z",
+									size: "12",
+								},
+							],
+						}),
+						{
+							status: 200,
+							headers: { "Content-Type": "application/json" },
+						},
+					);
+				}
 				if (url.includes("/drive/v3/files?")) {
 					return new Response(
 						JSON.stringify({
 							files: [
 								{
 									id: "seed-file",
-									name: "tabmd-backup-seed-n1.json",
+									name: "tabmd-backup-seed-n1",
 									createdTime: "2024-01-02T00:00:00.000Z",
 									size: "12",
 								},
@@ -1736,20 +1760,20 @@ describe("drive backup integration", () => {
 				}
 				if (url.includes("alt=media")) {
 					return new Response(
-						JSON.stringify({
-							notes: {
-								restored: createNote(
-									"restored",
-									"Restored note",
-									"Restored title",
-									10,
-									11,
-								),
-							},
-						}),
+						[
+							"---",
+							"tabmd-version: 1",
+							'tabmd-id: "restored"',
+							'tabmd-title: "Restored title"',
+							"tabmd-created-at: 10",
+							"tabmd-modified-at: 11",
+							"---",
+							"",
+							"Restored note",
+						].join("\n"),
 						{
 							status: 200,
-							headers: { "Content-Type": "application/json" },
+							headers: { "Content-Type": "text/markdown" },
 						},
 					);
 				}

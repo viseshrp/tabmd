@@ -157,6 +157,7 @@ function renderDriveBackups(
 		restoreButton.className = "drive-btn drive-btn-secondary drive-row-btn";
 		restoreButton.dataset.action = "restore-backup";
 		restoreButton.dataset.fileId = entry.fileId;
+		restoreButton.dataset.fileName = entry.fileName;
 		restoreButton.textContent = "Restore";
 		actionsCell.appendChild(restoreButton);
 
@@ -166,6 +167,7 @@ function renderDriveBackups(
 		deleteButton.className = "drive-btn drive-btn-danger drive-row-btn danger";
 		deleteButton.dataset.action = "delete-backup";
 		deleteButton.dataset.fileId = entry.fileId;
+		deleteButton.dataset.fileName = entry.fileName;
 		deleteButton.textContent = "Delete";
 		actionsCell.appendChild(deleteButton);
 
@@ -681,6 +683,7 @@ async function initDriveBackupSection(documentRef: Document): Promise<void> {
 		if (!fileId) {
 			return;
 		}
+		const fileName = button.dataset.fileName;
 
 		if (button.dataset.action === "restore-backup") {
 			void (async () => {
@@ -691,7 +694,7 @@ async function initDriveBackupSection(documentRef: Document): Promise<void> {
 					const token = await getAuthToken(true);
 					currentToken = token;
 					isConnected = true;
-					const restored = await restoreFromBackup(fileId, token);
+					const restored = await restoreFromBackup(fileId, token, fileName);
 					closeRestoreDialog();
 					setDriveStatus(
 						`Restore completed. ${restored.restoredNotes} note${restored.restoredNotes === 1 ? "" : "s"} restored.`,
@@ -806,7 +809,10 @@ async function initDriveBackupSection(documentRef: Document): Promise<void> {
 		return;
 	}
 
-	setDriveStatus("Connected to Google Drive. Ready to back up or restore.", false);
+	setDriveStatus(
+		"Connected to Google Drive. Ready to back up or restore.",
+		false,
+	);
 }
 
 /**

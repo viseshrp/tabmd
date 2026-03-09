@@ -1,11 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
 	deleteFile,
+	downloadTextFile,
 	downloadJsonFile,
 	getOrCreateFolder,
 	listFiles,
 	listFilesPage,
-	uploadJsonFile,
+	uploadTextFile,
 } from "../../entrypoints/drive/drive_api";
 
 describe("drive api helpers", () => {
@@ -93,7 +94,7 @@ describe("drive api helpers", () => {
 		expect(fetchMock).toHaveBeenCalledTimes(2);
 	});
 
-	it("uploads and downloads JSON files", async () => {
+	it("uploads text files and downloads both text and JSON payloads", async () => {
 		const fetchMock = vi
 			.fn()
 			.mockResolvedValueOnce(
@@ -107,6 +108,12 @@ describe("drive api helpers", () => {
 				),
 			)
 			.mockResolvedValueOnce(
+				new Response("# Markdown backup", {
+					status: 200,
+					headers: { "Content-Type": "text/markdown" },
+				}),
+			)
+			.mockResolvedValueOnce(
 				new Response(JSON.stringify({ notes: {} }), {
 					status: 200,
 					headers: { "Content-Type": "application/json" },
@@ -114,15 +121,23 @@ describe("drive api helpers", () => {
 			);
 		vi.stubGlobal("fetch", fetchMock);
 
-		const uploaded = await uploadJsonFile(
-			"tabmd-backup.json",
-			'{"notes":{}}',
+		const uploaded = await uploadTextFile(
+			"note-2026-03-09T13-42-14-254Z.md",
+			"# Markdown backup",
+			"text/markdown",
 			"folder-1",
 			"token-1",
 		);
 		expect(uploaded.id).toBe("file-1");
 		expect(String(fetchMock.mock.calls[0]?.[1]?.body)).toContain(
-			"tabmd-backup.json",
+			"note-2026-03-09T13-42-14-254Z.md",
+		);
+		expect(String(fetchMock.mock.calls[0]?.[1]?.body)).toContain(
+			"text/markdown",
+		);
+
+		await expect(downloadTextFile("file-1", "token-1")).resolves.toBe(
+			"# Markdown backup",
 		);
 
 		await expect(downloadJsonFile("file-1", "token-1")).resolves.toEqual({

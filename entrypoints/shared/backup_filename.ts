@@ -1,7 +1,7 @@
 /**
- * Shared backup filename helpers used by the Drive backup feature.
- * The timestamp stays readable and sortable, and the note-count suffix lets
- * the options page show rough snapshot size without downloading the file.
+ * Shared backup snapshot naming helpers used by the Drive backup feature.
+ * Snapshot folders keep a readable sortable timestamp, while each note file
+ * inside the folder uses the shared Markdown export filename helper.
  */
 
 /** File prefix used for all TabMD backup files stored in Google Drive. */
@@ -17,24 +17,24 @@ export function formatBackupTimestampSegment(timestampMs: number): string {
 }
 
 /**
- * Builds the canonical Drive backup filename:
- * `tabmd-backup-<timestamp>-n<noteCount>.json`
+ * Builds the canonical Drive backup snapshot folder name:
+ * `tabmd-backup-<timestamp>-n<noteCount>`
  */
-export function createTabmdBackupFileName(
+export function createTabmdBackupSnapshotName(
 	timestampMs: number,
 	noteCount: number,
 ): string {
 	const timestampSegment = formatBackupTimestampSegment(timestampMs);
 	const normalizedNoteCount = Math.max(0, Math.floor(noteCount));
-	return `${TABMD_BACKUP_FILE_PREFIX}-${timestampSegment}-n${normalizedNoteCount}.json`;
+	return `${TABMD_BACKUP_FILE_PREFIX}-${timestampSegment}-n${normalizedNoteCount}`;
 }
 
 /**
- * Extracts the `-n<noteCount>` suffix from a backup filename.
- * Non-canonical names simply report `0` so foreign files can still be listed safely.
+ * Extracts the `-n<noteCount>` suffix from a snapshot folder or legacy JSON file name.
+ * Supporting both shapes keeps older JSON snapshots restorable after the Markdown migration.
  */
 export function extractNoteCountFromBackupFileName(fileName: string): number {
-	const match = /-n(\d+)\.json$/i.exec(fileName);
+	const match = /-n(\d+)(?:\.json)?$/i.exec(fileName);
 	if (!match) {
 		return 0;
 	}
