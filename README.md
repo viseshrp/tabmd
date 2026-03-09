@@ -20,6 +20,7 @@ The current implementation is intentionally narrow:
 - Syntax-highlighted fenced code blocks via `highlight.js`, with deterministic plaintext fallback for unknown or unlabeled fences
 - Automatic note titles derived from the first meaningful line
 - Manual title overrides
+- Copy current note text directly from the toolbar
 - Export current note as a `.md` file named `title-<timestamp>.md`
 - Focus mode that expands the editor to the full workspace while keeping an explicit exit control visible
 - Theme setting with `os`, `light`, and `dark` modes
@@ -94,6 +95,7 @@ Responsibilities:
 - Save content and title changes immediately on editor or title edits
 - Reconcile with `chrome.storage.onChanged` so open surfaces stay in sync
 - Toggle Editor and Preview tabs through EasyMDE's native preview mode while keeping both surfaces stretched to the remaining workspace area
+- Copy the current editor text to the system clipboard with inline feedback
 - Export the current note
 - Open the options page
 
