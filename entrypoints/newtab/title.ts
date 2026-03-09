@@ -35,7 +35,7 @@ export function initTitleActions(
 		}
 		if (e.key === "Escape") {
 			// Revert to the latest committed title instead of the original bootstrap value.
-			input.value = getTitleForEditing(currentTitle);
+			input.value = getTitleForEditing(currentTitle, getEditorContent());
 			input.blur();
 		}
 	});
@@ -48,12 +48,19 @@ function showTitleEditor(
 ) {
 	display.hidden = true;
 	input.hidden = false;
-	input.value = getTitleForEditing(currentTitle);
+	input.value = getTitleForEditing(currentTitle, getEditorContent());
 	input.focus();
 }
 
-function getTitleForEditing(titleObjState: string | null): string {
-	return titleObjState ?? "";
+/**
+ * Editing should start from the same title text the user can already see.
+ * When the title is auto-derived from content, this avoids opening an empty input.
+ */
+function getTitleForEditing(
+	titleObjState: string | null,
+	content: string,
+): string {
+	return resolveNoteTitle({ title: titleObjState, content });
 }
 
 function commitTitle(
