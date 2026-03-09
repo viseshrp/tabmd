@@ -17,11 +17,11 @@ TabMD is a local-first Chrome MV3 extension. It uses the `wxt` framework to bund
    Handles visual theme preference (OS, Light, Dark mode) plus optional Google Drive connect/backup/restore actions. The restore list is loaded lazily into a dialog so the page avoids Drive network work until the user explicitly asks for backup history.
 
 5. **Drive Backup Modules** (`entrypoints/drive/`)
-   Wrap `chrome.identity`, call the Google Drive REST API, serialize note snapshots, enforce retention, maintain a local backup-index cache, and restore backups into local storage. Backup files are separated per extension install under `tabmd_backups/<installId>/`.
+   Wrap `chrome.identity`, call the Google Drive REST API, serialize note snapshots, enforce retention, maintain a local backup-index cache, and restore backups into local storage. Each backup run becomes one Drive snapshot folder under `tabmd_backups/<installId>/`, and each note inside that snapshot is stored as an individual Markdown file.
 
 ## Data and Persistence
 
-See `storage.md` for a deeper dive into the Chrome storage limits and implementation. Day-to-day persistence runs through `chrome.storage.local`; manual Drive backups serialize that same state into JSON snapshots stored in the user's Drive account.
+See `storage.md` for a deeper dive into the Chrome storage limits and implementation. Day-to-day persistence runs through `chrome.storage.local`; manual Drive backups serialize that same state into per-note Markdown snapshot folders stored in the user's Drive account.
 
 ## Interaction Logic
 

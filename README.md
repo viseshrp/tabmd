@@ -20,7 +20,7 @@ The current implementation is intentionally narrow:
 - Syntax-highlighted fenced code blocks via `highlight.js`
 - Automatic note titles derived from the first meaningful line
 - Manual title overrides
-- Export current note as a `.md` file
+- Export current note as a `.md` file named `title-<timestamp>.md`
 - Focus mode that expands the editor to the full workspace while keeping an explicit exit control visible
 - Theme setting with `os`, `light`, and `dark` modes
 - Optional manual Google Drive backup/restore with retention, delete, and restore pagination
@@ -75,6 +75,8 @@ Drive backups stay isolated per extension install. Each install gets a stable lo
 ```text
 tabmd_backups/<installId>/
 ```
+
+Each backup run creates one snapshot folder there, and each note inside that snapshot is uploaded as its own Markdown file using the same `title-<timestamp>.md` naming pipeline as local export.
 
 That separation lets multiple TabMD installs coexist without mixing backup files in the same Drive folder.
 
@@ -134,7 +136,7 @@ Responsibilities:
 - Apply the chosen theme immediately
 - Show a snackbar after saves
 - Connect/disconnect Google Drive for manual backups
-- Upload note snapshots to Drive and restore them on demand
+- Upload snapshot folders of per-note Markdown files to Drive and restore them on demand
 - Load the restore list lazily into a dialog
 - Delete individual Drive backups from that dialog
 - Manage retention and explicit restore-dialog pagination
@@ -266,6 +268,18 @@ Current TabMD extension ID from the baked-in key:
 5. Click `Restore from backup` to browse Drive snapshots lazily in the restore dialog.
 6. Use `Previous`, `Next`, and the page-size selector to page through backups.
 7. Click `Restore` to overwrite local notes with the selected snapshot, or `Delete` to remove a Drive backup file without restoring it.
+
+Local export uses the same file naming pipeline:
+
+```text
+<title>-<timestamp>.md
+```
+
+Example:
+
+```text
+test-2026-03-09T13-42-14-254Z.md
+```
 
 ## Known Constraints
 

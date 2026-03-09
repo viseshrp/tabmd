@@ -97,7 +97,7 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
 
 1. On the editor page, the user clicks an export action.
 2. The browser downloads a `.md` file containing the note content.
-3. The filename is derived from the note title.
+3. The filename is `<title>-<timestamp>.md`.
 
 ### 5.8 Toggle Focus Mode
 
@@ -111,8 +111,9 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
 2. Connects Google Drive explicitly.
 3. Sets a retention count.
 4. Clicks "Backup now".
-5. TabMD uploads a JSON snapshot containing all notes into the user's Drive account.
-6. Backup files are stored under the install-specific Drive path `tabmd_backups/<installId>/`.
+5. TabMD creates one snapshot folder containing one Markdown file per note.
+6. Note files use the same `title-<timestamp>.md` naming pipeline as local export.
+7. Backup snapshot folders are stored under the install-specific Drive path `tabmd_backups/<installId>/`.
 
 ### 5.10 Restore from Google Drive
 
@@ -160,7 +161,7 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
   - Uses EasyMDE's native preview surface rather than a separate preview container.
   - Supports: GFM tables, task lists, fenced code blocks with syntax highlighting.
 - Focus mode keeps the editor visible, hides the surrounding workspace chrome, and leaves the focus toggle available as an exit control.
-- Export downloads the current note content as `<title>.md`.
+- Export downloads the current note content as `<title>-<timestamp>.md`.
 - Options page link opens `options.html` in a new tab.
 
 ### 6.2 Popup
@@ -241,7 +242,7 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
 - Snackbar confirmation on save ("Settings saved.").
 - Theme changes apply immediately to the options page itself.
 - Drive auth status is checked non-interactively on load.
-- Drive backup uploads all notes.
+- Drive backup uploads all notes as individual Markdown files inside one snapshot folder.
 - Restore-list metadata is loaded lazily only when the user opens the restore dialog.
 - Restore replaces local notes with the selected backup payload.
 - Delete removes only the selected Drive backup file.

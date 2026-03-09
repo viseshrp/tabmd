@@ -14,7 +14,7 @@ This document outlines the testing strategy for the TabMD extension to ensure lo
 | **Blob Export** | `tests/unit/export.test.ts` | File name sanitization over the export sequence via Anchor clicks. |
 | **Drive Auth** | `tests/unit/drive_auth.test.ts` | OAuth token retrieval, cached-token handling, and user-facing auth error formatting. |
 | **Drive REST API** | `tests/unit/drive_api.test.ts` | Folder lookup/creation, file listing, uploads, downloads, and delete handling. |
-| **Drive Backup Flow** | `tests/unit/drive_backup.test.ts` | Backup serialization, retention, install-folder separation, local index caching, pagination, fallback behavior, and restore logic. |
+| **Drive Backup Flow** | `tests/unit/drive_backup.test.ts` | Snapshot-folder creation, per-note Markdown uploads, retention, install-folder separation, local index caching, pagination, fallback behavior, and restore logic. |
 | **Preview Rendering** | `tests/unit/preview.test.ts` | Validates the shared Markdown-to-HTML renderer used by EasyMDE's preview pipeline, including syntax highlighting fallbacks. |
 | **Editor View State** | `tests/unit/editor_focus_mode.test.ts` | Verifies focus mode state, Escape handling, synchronous preview/editor tab transitions, and editor refreshes when the writing surface becomes visible again. |
 | **Runtime Initializations** | `tests/integration/` | Background service loading checks and visual UI rendering configurations. |
