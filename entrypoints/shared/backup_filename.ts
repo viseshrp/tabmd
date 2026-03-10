@@ -1,11 +1,12 @@
 /**
  * Shared backup snapshot naming helpers used by the Drive backup feature.
- * Snapshot folders keep a readable sortable timestamp, while each note file
- * inside the folder uses the shared Markdown export filename helper.
+ * Backups are stored as one `.zip` file per snapshot, while each note inside
+ * the archive still uses the shared Markdown export filename helper.
  */
 
 /** File prefix used for all TabMD backup files stored in Google Drive. */
 export const TABMD_BACKUP_FILE_PREFIX = "tabmd-backup";
+export const TABMD_BACKUP_FILE_EXTENSION = ".zip";
 
 /**
  * Converts an epoch-ms timestamp into a filename-safe ISO segment.
@@ -16,11 +17,8 @@ export function formatBackupTimestampSegment(timestampMs: number): string {
 	return new Date(safeTimestamp).toISOString().replace(/[:.]/g, "-");
 }
 
-/**
- * Builds the canonical Drive backup snapshot folder name:
- * `tabmd-backup-<timestamp>-n<noteCount>`
- */
-export function createTabmdBackupSnapshotName(
+/** Builds the canonical snapshot base name shared by legacy folders and zip files. */
+export function createTabmdBackupSnapshotBaseName(
 	timestampMs: number,
 	noteCount: number,
 ): string {
@@ -29,9 +27,27 @@ export function createTabmdBackupSnapshotName(
 	return `${TABMD_BACKUP_FILE_PREFIX}-${timestampSegment}-n${normalizedNoteCount}`;
 }
 
-/** Extracts the `-n<noteCount>` suffix from a snapshot folder name. */
+/**
+ * Builds the canonical Drive backup archive name:
+ * `tabmd-backup-<timestamp>-n<noteCount>.zip`
+ */
+export function createTabmdBackupSnapshotName(
+	timestampMs: number,
+	noteCount: number,
+): string {
+	return `${createTabmdBackupSnapshotBaseName(timestampMs, noteCount)}${TABMD_BACKUP_FILE_EXTENSION}`;
+}
+
+/** Removes the optional `.zip` suffix so legacy folders and current archives parse identically. */
+function stripBackupArchiveExtension(fileName: string): string {
+	return fileName.toLowerCase().endsWith(TABMD_BACKUP_FILE_EXTENSION)
+		? fileName.slice(0, -TABMD_BACKUP_FILE_EXTENSION.length)
+		: fileName;
+}
+
+/** Extracts the `-n<noteCount>` suffix from either a legacy folder or a zip snapshot name. */
 export function extractNoteCountFromBackupFileName(fileName: string): number {
-	const match = /-n(\d+)$/i.exec(fileName);
+	const match = /-n(\d+)$/i.exec(stripBackupArchiveExtension(fileName));
 	if (!match) {
 		return 0;
 	}

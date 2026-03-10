@@ -9,14 +9,21 @@ import {
 	parseNoteFromMarkdownFile,
 	serializeNoteToMarkdownFile,
 } from "../shared/note_markdown";
+import {
+	createBackupZip,
+	extractBackupZipTextFiles,
+	type BackupZipTextFile,
+} from "../shared/backup_zip";
 import { readAllNotes, writeAllNotes } from "../shared/notes";
 import { logExtensionError, runWithConcurrency } from "../shared/utils";
 import {
 	deleteFile,
+	downloadBinaryFile,
 	downloadTextFile,
 	getOrCreateFolder,
 	listFiles,
 	listFilesPage,
+	uploadBinaryFile,
 	uploadTextFile,
 	type DriveListFilesPage,
 } from "./drive_api";
@@ -38,7 +45,9 @@ type DriveApiDeps = {
 	getOrCreateFolder: typeof getOrCreateFolder;
 	listFiles: typeof listFiles;
 	listFilesPage?: typeof listFilesPage;
+	uploadBinaryFile: typeof uploadBinaryFile;
 	uploadTextFile: typeof uploadTextFile;
+	downloadBinaryFile: typeof downloadBinaryFile;
 	downloadTextFile: typeof downloadTextFile;
 	deleteFile: typeof deleteFile;
 };
@@ -48,15 +57,63 @@ const defaultDeps: DriveApiDeps = {
 	getOrCreateFolder,
 	listFiles,
 	listFilesPage,
+	uploadBinaryFile,
 	uploadTextFile,
+	downloadBinaryFile,
 	downloadTextFile,
 	deleteFile,
 };
 
 /** Retention deletes run with a small concurrency cap to avoid unbounded request bursts. */
 const RETENTION_DELETE_CONCURRENCY = 4;
-const BACKUP_UPLOAD_CONCURRENCY = 4;
 const RESTORE_DOWNLOAD_CONCURRENCY = 4;
+
+/**
+ * Backup ZIP files cannot contain duplicate file paths, unlike Drive folders.
+ * This helper keeps the shared Markdown filename format while suffixing only collisions.
+ */
+function createUniqueBackupFileName(
+	fileName: string,
+	usedFileNames: Map<string, number>,
+): string {
+	const nextUseCount = (usedFileNames.get(fileName) ?? 0) + 1;
+	usedFileNames.set(fileName, nextUseCount);
+	if (nextUseCount === 1) {
+		return fileName;
+	}
+
+	const extensionIndex = fileName.lastIndexOf(".");
+	if (extensionIndex <= 0) {
+		return `${fileName}-${nextUseCount}`;
+	}
+
+	return `${fileName.slice(0, extensionIndex)}-${nextUseCount}${fileName.slice(extensionIndex)}`;
+}
+
+/**
+ * Serializes notes into one archive payload.
+ * The work is linear in note count and total content size, and a shared filename helper
+ * keeps local export and remote backup names aligned.
+ */
+function createBackupArchiveFiles(
+	noteEntries: readonly NoteRecord[],
+	timestamp: number,
+): BackupZipTextFile[] {
+	const usedFileNames = new Map<string, number>();
+
+	return noteEntries.map((note) => {
+		const baseFileName = createNoteMarkdownFileName(
+			note.title,
+			note.content,
+			timestamp,
+		);
+		return {
+			content: serializeNoteToMarkdownFile(note),
+			modifiedAt: note.modifiedAt,
+			name: createUniqueBackupFileName(baseFileName, usedFileNames),
+		};
+	});
+}
 
 /**
  * Converts raw Drive file metadata into normalized backup rows.
@@ -314,8 +371,8 @@ export async function listDriveBackupsPage(
 
 /**
  * Performs a manual backup:
- * create one snapshot folder per run, upload one Markdown file per note, enforce retention,
- * refresh the local index, and persist the normalized retention setting that was used.
+ * create one snapshot ZIP per run, upload it, enforce retention, refresh the local index,
+ * and persist the normalized retention setting that was used.
  */
 export async function performBackup(
 	token: string,
@@ -332,35 +389,15 @@ export async function performBackup(
 	const timestamp = Date.now();
 	const installFolderId = await getInstallFolderId(installId, token, deps);
 	const noteCount = noteEntries.length;
-	const snapshotFolderName = createBackupFileName(timestamp, noteCount);
-	const snapshotFolderId = await deps.getOrCreateFolder(
-		snapshotFolderName,
-		token,
+	const snapshotFileName = createBackupFileName(timestamp, noteCount);
+	const archiveFiles = createBackupArchiveFiles(noteEntries, timestamp);
+	const archiveBlob = createBackupZip(archiveFiles);
+	await deps.uploadBinaryFile(
+		snapshotFileName,
+		archiveBlob,
+		"application/zip",
 		installFolderId,
-	);
-
-	/**
-	 * Each note becomes its own Markdown artifact.
-	 * The shared export filename helper keeps local exports and Drive backups aligned.
-	 */
-	await runWithConcurrency(
-		noteEntries,
-		BACKUP_UPLOAD_CONCURRENCY,
-		async (note) => {
-			const fileName = createNoteMarkdownFileName(
-				note.title,
-				note.content,
-				timestamp,
-			);
-			const fileContent = serializeNoteToMarkdownFile(note);
-			await deps.uploadTextFile(
-				fileName,
-				fileContent,
-				"text/markdown",
-				snapshotFolderId,
-				token,
-			);
-		},
+		token,
 	);
 
 	const retention =
@@ -384,13 +421,33 @@ export async function performBackup(
 
 /**
  * Downloads a backup snapshot and overwrites local notes.
- * Markdown snapshots are restored from all `.md` files inside the selected folder.
+ * Zip snapshots are restored from one Drive file, while legacy folder snapshots still work.
  */
 export async function restoreFromBackup(
 	fileId: string,
 	token: string,
-	deps: Pick<DriveApiDeps, "listFiles" | "downloadTextFile"> = defaultDeps,
+	backupFileName?: string,
+	deps: Pick<
+		DriveApiDeps,
+		"listFiles" | "downloadBinaryFile" | "downloadTextFile"
+	> = defaultDeps,
 ): Promise<{ restoredNotes: number }> {
+	if (typeof backupFileName === "string" && backupFileName.endsWith(".zip")) {
+		const archiveBuffer = await deps.downloadBinaryFile(fileId, token);
+		const markdownFiles = extractBackupZipTextFiles(archiveBuffer).filter((file) =>
+			file.name.toLowerCase().endsWith(".md"),
+		);
+		const restoredEntries = markdownFiles.map((file) =>
+			parseNoteFromMarkdownFile(file.content, file.modifiedAt),
+		);
+		const notes = normalizeNotesRecord(
+			Object.fromEntries(restoredEntries.map((note) => [note.id, note])),
+		);
+		await writeAllNotes(notes);
+
+		return { restoredNotes: Object.keys(notes).length };
+	}
+
 	const files = await deps.listFiles(fileId, token);
 	const markdownFiles = files.filter(
 		(file) =>

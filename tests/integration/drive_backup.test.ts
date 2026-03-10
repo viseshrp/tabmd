@@ -107,7 +107,7 @@ describe("drive backup integration", () => {
 					backups: [
 						{
 							fileId: "seed-file",
-							fileName: "tabmd-backup-seed-n1",
+							fileName: "tabmd-backup-seed-n1.zip",
 							timestamp: 1700000000000,
 							size: 12,
 							noteCount: 1,
@@ -144,9 +144,9 @@ describe("drive backup integration", () => {
 						files: [
 							{
 								id: "new-file",
-								name: "tabmd-backup-2024-01-02T00-00-00-000Z-n1",
+								name: "tabmd-backup-2024-01-02T00-00-00-000Z-n1.zip",
 								createdTime: "2024-01-02T00:00:00.000Z",
-								size: "100",
+								size: "256",
 							},
 						],
 					}),
@@ -161,9 +161,9 @@ describe("drive backup integration", () => {
 				return new Response(
 					JSON.stringify({
 						id: "new-file",
-						name: "uploaded-note-2026-03-09T13-42-14-254Z.md",
+						name: "tabmd-backup-2024-01-02T00-00-00-000Z-n1.zip",
 						createdTime: "2024-01-02T00:00:00.000Z",
-						size: "100",
+						size: "256",
 					}),
 					{
 						status: 200,
@@ -188,8 +188,13 @@ describe("drive backup integration", () => {
 		await waitForCondition(() => {
 			const backupIndex = mock.__storageData[
 				DRIVE_STORAGE_KEYS.driveBackupIndex
-			] as { backups?: Array<{ fileId: string }> } | undefined;
-			return backupIndex?.backups?.[0]?.fileId === "new-file";
+			] as
+				| { backups?: Array<{ fileId: string; fileName: string }> }
+				| undefined;
+			return (
+				backupIndex?.backups?.[0]?.fileId === "new-file" &&
+				backupIndex.backups[0]?.fileName.endsWith(".zip")
+			);
 		});
 		await waitForCondition(() =>
 			(getDriveStatus().textContent ?? "").includes("Backup completed"),
@@ -200,8 +205,6 @@ describe("drive backup integration", () => {
 			String(call.at(0) ?? "").includes("/upload/drive/v3/files"),
 		);
 		expect(uploadCalls.length).toBeGreaterThan(0);
-		expect(String(uploadCalls[0]?.[1]?.body ?? "")).toContain(".md");
-		expect(String(uploadCalls[0]?.[1]?.body ?? "")).toContain("text/markdown");
 	});
 
 	it("skips upload when there are no notes to back up", async () => {
