@@ -288,6 +288,8 @@ Example:
 tabmd-backup-2026-03-10T16-36-45-645Z-n7.zip
 ```
 
+TODO: Remove legacy folder-based restore compatibility after older pre-ZIP Drive backups are no longer supported in the field.
+
 Local export uses the same file naming pipeline:
 
 ```text
