@@ -111,9 +111,10 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
 2. Connects Google Drive explicitly.
 3. Sets a retention count.
 4. Clicks "Backup now".
-5. TabMD creates one snapshot folder containing one Markdown file per note.
-6. Note files use the same `title-<timestamp>.md` naming pipeline as local export.
-7. Backup snapshot folders are stored under the install-specific Drive path `tabmd_backups/<installId>/`.
+5. TabMD creates one snapshot ZIP containing one Markdown file per note.
+6. The ZIP is named `tabmd-backup-<timestamp>-n<noteCount>.zip`.
+7. Note files inside the ZIP use the same `title-<timestamp>.md` naming pipeline as local export.
+8. Backup snapshot ZIP files are stored under the install-specific Drive path `tabmd_backups/<installId>/`.
 
 ### 5.10 Restore from Google Drive
 
@@ -242,9 +243,10 @@ The editor experience is powered by EasyMDE. The product should feel lightweight
 - Snackbar confirmation on save ("Settings saved.").
 - Theme changes apply immediately to the options page itself.
 - Drive auth status is checked non-interactively on load.
-- Drive backup uploads all notes as individual Markdown files inside one snapshot folder.
+- Drive backup uploads all notes as individual Markdown files inside one snapshot ZIP.
 - Restore-list metadata is loaded lazily only when the user opens the restore dialog.
 - Restore replaces local notes with the selected Markdown snapshot contents.
+- Restore remains compatible with older folder-based snapshots created before the ZIP format change.
 - Delete removes only the selected Drive backup file.
 - The baked-in manifest key gives TabMD its own stable extension ID, so the OAuth client must be configured for that specific ID.
 - Reachable from: popup, full list page, new tab editor page.

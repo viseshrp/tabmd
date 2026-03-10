@@ -80,8 +80,7 @@ Drive backups stay isolated per extension install. Each install gets a stable lo
 tabmd_backups/<installId>/
 ```
 
-Each backup run creates one snapshot folder there, and each note inside that snapshot is uploaded as its own Markdown file using the same `title-<timestamp>.md` naming pipeline as local export.
-
+Each backup run now creates one snapshot ZIP there, named `tabmd-backup-<timestamp>-n<noteCount>.zip`. Inside that archive, each note still uses the shared `title-<timestamp>.md` naming pipeline as local export.
 That separation lets multiple TabMD installs coexist without mixing backup files in the same Drive folder.
 
 ## Runtime Surfaces
@@ -143,7 +142,7 @@ Responsibilities:
 - Apply the chosen theme immediately
 - Show a snackbar after saves
 - Connect/disconnect Google Drive for manual backups
-- Upload snapshot folders of per-note Markdown files to Drive and restore them on demand
+- Upload one snapshot ZIP of per-note Markdown files to Drive and restore it on demand
 - Load the restore list lazily into a dialog
 - Delete individual Drive backups from that dialog
 - Manage retention and explicit restore-dialog pagination
@@ -276,6 +275,18 @@ Current TabMD extension ID from the baked-in key:
 5. Click `Restore from backup` to browse Drive snapshots lazily in the restore dialog.
 6. Use `Previous`, `Next`, and the page-size selector to page through backups.
 7. Click `Restore` to overwrite local notes with the selected snapshot, or `Delete` to remove a Drive backup file without restoring it.
+
+Drive backup filenames use:
+
+```text
+tabmd-backup-<timestamp>-n<noteCount>.zip
+```
+
+Example:
+
+```text
+tabmd-backup-2026-03-10T16-36-45-645Z-n7.zip
+```
 
 Local export uses the same file naming pipeline:
 
