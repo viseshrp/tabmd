@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
 	deleteFile,
+	downloadBinaryFile,
 	downloadTextFile,
 	getOrCreateFolder,
 	listFiles,
 	listFilesPage,
+	uploadBinaryFile,
 	uploadTextFile,
 } from "../../entrypoints/drive/drive_api";
 
@@ -124,16 +126,62 @@ describe("drive api helpers", () => {
 			"token-1",
 		);
 		expect(uploaded.id).toBe("file-1");
-		expect(String(fetchMock.mock.calls[0]?.[1]?.body)).toContain(
+		const uploadBody = fetchMock.mock.calls[0]?.[1]?.body;
+		const uploadBodyText =
+			uploadBody instanceof Blob ? await uploadBody.text() : String(uploadBody);
+		expect(uploadBodyText).toContain(
 			"note-2026-03-09T13-42-14-254Z.md",
 		);
-		expect(String(fetchMock.mock.calls[0]?.[1]?.body)).toContain(
-			"text/markdown",
-		);
+		expect(uploadBodyText).toContain("text/markdown");
 
 		await expect(downloadTextFile("file-1", "token-1")).resolves.toBe(
 			"# Markdown backup",
 		);
+	});
+
+	it("uploads and downloads zip backup files", async () => {
+		const archiveBytes = new Uint8Array([0x50, 0x4b, 0x03, 0x04]);
+		const fetchMock = vi
+			.fn()
+			.mockResolvedValueOnce(
+				new Response(
+					JSON.stringify({
+						id: "zip-file",
+						name: "tabmd-backup-2026-03-10T16-36-45-645Z-n7.zip",
+						size: "2048",
+					}),
+					{ status: 200, headers: { "Content-Type": "application/json" } },
+				),
+			)
+			.mockResolvedValueOnce(
+				new Response(archiveBytes, {
+					status: 200,
+					headers: { "Content-Type": "application/zip" },
+				}),
+			);
+		vi.stubGlobal("fetch", fetchMock);
+
+		const uploaded = await uploadBinaryFile(
+			"tabmd-backup-2026-03-10T16-36-45-645Z-n7.zip",
+			new Blob([archiveBytes], { type: "application/zip" }),
+			"application/zip",
+			"folder-1",
+			"token-1",
+		);
+		expect(uploaded.id).toBe("zip-file");
+
+		const uploadBody = fetchMock.mock.calls[0]?.[1]?.body;
+		const uploadBodyText =
+			uploadBody instanceof Blob ? await uploadBody.text() : String(uploadBody);
+		expect(uploadBodyText).toContain(
+			"tabmd-backup-2026-03-10T16-36-45-645Z-n7.zip",
+		);
+		expect(uploadBodyText).toContain("application/zip");
+
+		const downloaded = new Uint8Array(
+			await downloadBinaryFile("zip-file", "token-1"),
+		);
+		expect(downloaded).toEqual(archiveBytes);
 	});
 
 	it("ignores 404 deletes and throws on other failures", async () => {

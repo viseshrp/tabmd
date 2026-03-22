@@ -208,6 +208,26 @@ export async function uploadTextFile(
 	folderId: string,
 	token: string,
 ): Promise<DriveFileRecord> {
+	return uploadBinaryFile(
+		name,
+		new Blob([content], { type: `${mimeType}; charset=UTF-8` }),
+		mimeType,
+		folderId,
+		token,
+	);
+}
+
+/**
+ * Uploads one binary file using Drive's multipart upload endpoint and returns the created metadata.
+ * The body is assembled from Blob parts so large backups do not require an extra string copy.
+ */
+export async function uploadBinaryFile(
+	name: string,
+	content: Blob,
+	mimeType: string,
+	folderId: string,
+	token: string,
+): Promise<DriveFileRecord> {
 	const boundary = `tabmd-${crypto.randomUUID()}`;
 	const metadata = {
 		name,
@@ -215,18 +235,20 @@ export async function uploadTextFile(
 		parents: [folderId],
 	};
 
-	const body = [
-		`--${boundary}`,
-		"Content-Type: application/json; charset=UTF-8",
-		"",
-		JSON.stringify(metadata),
-		`--${boundary}`,
-		`Content-Type: ${mimeType}; charset=UTF-8`,
-		"",
-		content,
-		`--${boundary}--`,
-		"",
-	].join("\r\n");
+	const body = new Blob(
+		[
+			`--${boundary}\r\n`,
+			"Content-Type: application/json; charset=UTF-8\r\n\r\n",
+			JSON.stringify(metadata),
+			`\r\n--${boundary}\r\n`,
+			`Content-Type: ${mimeType}\r\n\r\n`,
+			content,
+			`\r\n--${boundary}--\r\n`,
+		],
+		{
+			type: `multipart/related; boundary=${boundary}`,
+		},
+	);
 
 	const response = await fetch(
 		`${DRIVE_UPLOAD_BASE}/files?uploadType=multipart&fields=id,name,createdTime,modifiedTime,size&supportsAllDrives=false`,
@@ -280,6 +302,35 @@ export async function downloadTextFile(
 	}
 
 	return response.text();
+}
+
+/** Downloads one binary file from Drive using `alt=media`. */
+export async function downloadBinaryFile(
+	fileId: string,
+	token: string,
+): Promise<ArrayBuffer> {
+	const response = await fetch(
+		`${DRIVE_API_BASE}/files/${encodeURIComponent(fileId)}?alt=media`,
+		{
+			method: "GET",
+			headers: buildAuthHeaders(token),
+		},
+	);
+
+	if (!response.ok) {
+		let details = "";
+		try {
+			details = await response.text();
+		} catch {
+			details = "";
+		}
+
+		throw new Error(
+			`Drive download file failed (${response.status}): ${details}`.trim(),
+		);
+	}
+
+	return response.arrayBuffer();
 }
 /**
  * Deletes a Drive file by ID.

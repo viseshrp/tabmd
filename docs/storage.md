@@ -70,7 +70,13 @@ tabmd_backups/<installId>/
 
 ### Drive Backup Snapshot Format
 
-Each uploaded Drive backup stores one snapshot folder. Inside that folder, every note is stored as an individual Markdown file using the shared export filename format:
+Each uploaded Drive backup stores one snapshot ZIP file:
+
+```text
+tabmd-backup-<timestamp>-n<noteCount>.zip
+```
+
+Inside that archive, every note is stored as an individual Markdown file using the shared export filename format:
 
 ```text
 <title>-<timestamp>.md
@@ -83,4 +89,4 @@ The file body contains Markdown plus a small TabMD frontmatter block so restore 
 - `createdAt`
 - `modifiedAt`
 
-The options-page restore dialog uses the cached `DriveBackupIndex` for quick local metadata reads when available, but the live restore list is fetched lazily from Drive with explicit pagination controls, delete actions, and on-demand restore downloads.
+The options-page restore dialog uses the cached `DriveBackupIndex` for quick local metadata reads when available, but the live restore list is fetched lazily from Drive with explicit pagination controls, delete actions, and on-demand restore downloads. Restore remains backward compatible with older folder-based backups that were created before the ZIP format change.

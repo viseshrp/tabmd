@@ -19,6 +19,7 @@ import {
 	normalizeRetentionCount,
 	parseDriveTimestamp,
 } from "../../entrypoints/drive/types";
+import { createBackupZip } from "../../entrypoints/shared/backup_zip";
 import { createNoteMarkdownFileName } from "../../entrypoints/shared/note_markdown";
 import { STORAGE_KEYS } from "../../entrypoints/shared/storage";
 import { createMockChrome, setMockChrome } from "../helpers/mock_chrome";
@@ -37,10 +38,12 @@ describe("drive backup orchestration", () => {
 
 	it("shares the canonical filename and retention helper values", () => {
 		expect(createBackupFileName(1700000000000, 4)).toBe(
-			"tabmd-backup-2023-11-14T22-13-20-000Z-n4",
+			"tabmd-backup-2023-11-14T22-13-20-000Z-n4.zip",
 		);
 		expect(
-			extractNoteCountFromFileName("tabmd-backup-2026-03-09T13-42-14-254Z-n4"),
+			extractNoteCountFromFileName(
+				"tabmd-backup-2026-03-09T13-42-14-254Z-n4.zip",
+			),
 		).toBe(4);
 		expect(
 			createNoteMarkdownFileName(
@@ -162,13 +165,19 @@ describe("drive backup orchestration", () => {
 			listFiles: async () => [
 				{
 					id: "f1",
-					name: "tabmd-backup-2024-01-01T00-00-00-000Z-n5",
+					name: "tabmd-backup-2024-01-01T00-00-00-000Z-n5.zip",
 					createdTime: "2024-01-01T00:00:00.000Z",
 					size: "42",
 				},
 			],
 			listFilesPage: async () => ({ files: [], nextPageToken: null }),
+			uploadBinaryFile: async () => {
+				throw new Error("not used");
+			},
 			uploadTextFile: async () => {
+				throw new Error("not used");
+			},
+			downloadBinaryFile: async () => {
 				throw new Error("not used");
 			},
 			downloadTextFile: async () => {
@@ -200,7 +209,7 @@ describe("drive backup orchestration", () => {
 				files: [
 					{
 						id: "f2",
-						name: "tabmd-backup-2024-01-02T00-00-00-000Z-n2",
+						name: "tabmd-backup-2024-01-02T00-00-00-000Z-n2.zip",
 						createdTime: "2024-01-02T00:00:00.000Z",
 						size: "50",
 					},
@@ -227,7 +236,7 @@ describe("drive backup orchestration", () => {
 			listFiles: async () => [
 				{
 					id: "f1",
-					name: "tabmd-backup-2024-01-01T00-00-00-000Z-n5",
+					name: "tabmd-backup-2024-01-01T00-00-00-000Z-n5.zip",
 					createdTime: "2024-01-01T00:00:00.000Z",
 					size: "42",
 				},
@@ -257,7 +266,7 @@ describe("drive backup orchestration", () => {
 		expect(page.nextPageToken).toBeNull();
 	});
 
-	it("performs a snapshot backup by uploading one markdown file per note", async () => {
+	it("performs a snapshot backup by uploading one zip file per note set", async () => {
 		const mock = createMockChrome({
 			initialStorage: {
 				[STORAGE_KEYS.notes]: {
@@ -284,8 +293,9 @@ describe("drive backup orchestration", () => {
 		const folderCalls: Array<{ name: string; parentId?: string }> = [];
 		const uploadedFiles: Array<{
 			name: string;
-			content: string;
+			contentType: string;
 			folderId: string;
+			size: number;
 		}> = [];
 
 		const kept = await performBackup(
@@ -302,26 +312,38 @@ describe("drive backup orchestration", () => {
 				},
 				listFiles: async () => [
 					{
-						id: "tabmd-backup-2026-03-09T13-42-14-254Z-n2-id",
-						name: "tabmd-backup-2026-03-09T13-42-14-254Z-n2",
+						id: "tabmd-backup-2026-03-09T13-42-14-254Z-n2.zip-id",
+						name: "tabmd-backup-2026-03-09T13-42-14-254Z-n2.zip",
 						createdTime: "2026-03-09T13:42:14.254Z",
-						size: "0",
+						size: "512",
 					},
 					{
 						id: "old-snapshot",
-						name: "tabmd-backup-2026-03-08T13-42-14-254Z-n1",
+						name: "tabmd-backup-2026-03-08T13-42-14-254Z-n1.zip",
 						createdTime: "2026-03-08T13:42:14.254Z",
-						size: "0",
+						size: "256",
 					},
 				],
 				listFilesPage: async () => ({ files: [], nextPageToken: null }),
-				uploadTextFile: async (name, content, _mimeType, folderId) => {
-					uploadedFiles.push({ name, content, folderId });
+				uploadBinaryFile: async (name, content, mimeType, folderId) => {
+					uploadedFiles.push({
+						contentType: mimeType,
+						folderId,
+						name,
+						size: content.size,
+					});
 					return {
 						id: `${name}-id`,
 						name,
 						modifiedTime: "2026-03-09T13:42:14.254Z",
+						size: String(content.size),
 					};
+				},
+				uploadTextFile: async () => {
+					throw new Error("not used");
+				},
+				downloadBinaryFile: async () => {
+					throw new Error("not used");
 				},
 				downloadTextFile: async () => {
 					throw new Error("not used");
@@ -353,12 +375,80 @@ describe("drive backup orchestration", () => {
 			name: "install-1",
 			parentId: "tabmd_backups-id",
 		});
-		expect(folderCalls[2]?.name).toMatch(/^tabmd-backup-.*-n2$/);
-		expect(folderCalls[2]?.parentId).toBe("install-1-id");
-		expect(uploadedFiles).toHaveLength(2);
-		expect(uploadedFiles[0]?.name).toMatch(/\.md$/);
-		expect(uploadedFiles[0]?.content).toContain("tabmd-id");
+		expect(folderCalls).toHaveLength(2);
+		expect(uploadedFiles).toHaveLength(1);
+		expect(uploadedFiles[0]?.name).toMatch(/^tabmd-backup-.*-n2\.zip$/);
+		expect(uploadedFiles[0]?.contentType).toBe("application/zip");
+		expect(uploadedFiles[0]?.folderId).toBe("install-1-id");
+		expect(uploadedFiles[0]?.size).toBeGreaterThan(0);
 		expect(kept).toHaveLength(1);
+	});
+
+	it("restores notes from a zip snapshot file", async () => {
+		const mock = createMockChrome({
+			initialStorage: {
+				[STORAGE_KEYS.settings]: { theme: "light" },
+			},
+		});
+		setMockChrome(mock);
+
+		const archive = createBackupZip([
+			{
+				name: "Manual-2026-03-09T13-42-14-254Z.md",
+				content: [
+					"---",
+					"tabmd-version: 1",
+					'tabmd-id: "note-1"',
+					'tabmd-title: "Manual"',
+					"tabmd-created-at: 10",
+					"tabmd-modified-at: 11",
+					"---",
+					"",
+					"# First",
+				].join("\n"),
+				modifiedAt: Date.UTC(2026, 2, 9, 13, 42, 14, 254),
+			},
+			{
+				name: "Second-2026-03-09T13-42-14-254Z.md",
+				content: [
+					"---",
+					"tabmd-version: 1",
+					'tabmd-id: "note-2"',
+					"tabmd-title: null",
+					"tabmd-created-at: 12",
+					"tabmd-modified-at: 13",
+					"---",
+					"",
+					"Second",
+				].join("\n"),
+				modifiedAt: Date.UTC(2026, 2, 9, 13, 42, 14, 254),
+			},
+		]);
+
+		const restored = await restoreFromBackup(
+			"snapshot-file",
+			"token-1",
+			"tabmd-backup-2026-03-09T13-42-14-254Z-n2.zip",
+			{
+				listFiles: async () => {
+					throw new Error("not used");
+				},
+				downloadBinaryFile: async () => archive.arrayBuffer(),
+				downloadTextFile: async () => {
+					throw new Error("not used");
+				},
+			},
+		);
+
+		expect(restored.restoredNotes).toBe(2);
+		expect(
+			(
+				mock.__storageData[STORAGE_KEYS.notes] as Record<string, { id: string }>
+			)["note-1"]?.id,
+		).toBe("note-1");
+		expect(mock.__storageData[STORAGE_KEYS.settings]).toEqual({
+			theme: "light",
+		});
 	});
 
 	it("restores notes from a markdown snapshot folder", async () => {
@@ -372,6 +462,7 @@ describe("drive backup orchestration", () => {
 		const restored = await restoreFromBackup(
 			"snapshot-folder",
 			"token-1",
+			undefined,
 			{
 				listFiles: async () => [
 					{
@@ -385,6 +476,9 @@ describe("drive backup orchestration", () => {
 						createdTime: "2026-03-09T13:42:14.254Z",
 					},
 				],
+				downloadBinaryFile: async () => {
+					throw new Error("not used");
+				},
 				downloadTextFile: async (fileId: string) => {
 					if (fileId === "f1") {
 						return [
@@ -470,13 +564,19 @@ describe("drive backup orchestration", () => {
 				listFiles: async () => [
 					{
 						id: "drive-1",
-						name: "tabmd-backup-2024-01-02T00-00-00-000Z-n1",
+						name: "tabmd-backup-2024-01-02T00-00-00-000Z-n1.zip",
 						createdTime: "2024-01-02T00:00:00.000Z",
 						size: "9",
 					},
 				],
 				listFilesPage: async () => ({ files: [], nextPageToken: null }),
+				uploadBinaryFile: async () => {
+					throw new Error("not used");
+				},
 				uploadTextFile: async () => {
+					throw new Error("not used");
+				},
+				downloadBinaryFile: async () => {
 					throw new Error("not used");
 				},
 				downloadTextFile: async () => {
@@ -489,7 +589,7 @@ describe("drive backup orchestration", () => {
 		).resolves.toEqual([
 			{
 				fileId: "drive-1",
-				fileName: "tabmd-backup-2024-01-02T00-00-00-000Z-n1",
+				fileName: "tabmd-backup-2024-01-02T00-00-00-000Z-n1.zip",
 				timestamp: Date.parse("2024-01-02T00:00:00.000Z"),
 				size: 9,
 				noteCount: 1,
@@ -515,7 +615,13 @@ describe("drive backup orchestration", () => {
 				},
 				listFiles: async () => [],
 				listFilesPage: async () => ({ files: [], nextPageToken: null }),
+				uploadBinaryFile: async () => {
+					throw new Error("not used");
+				},
 				uploadTextFile: async () => {
+					throw new Error("not used");
+				},
+				downloadBinaryFile: async () => {
 					throw new Error("not used");
 				},
 				downloadTextFile: async () => {

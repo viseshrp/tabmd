@@ -28,5 +28,18 @@ describe("newtab stylesheet", () => {
 			".EasyMDEContainer .CodeMirror.tabmd-preview-mode .CodeMirror-scroll {",
 		);
 		expect(newtabStylesheet).toContain("overflow: hidden !important;");
+		expect(newtabStylesheet).toContain(
+			".EasyMDEContainer .CodeMirror.tabmd-preview-mode .CodeMirror-vscrollbar,",
+		);
+		expect(newtabStylesheet).toContain(
+			".EasyMDEContainer .CodeMirror.tabmd-preview-mode .CodeMirror-hscrollbar,",
+		);
+		expect(newtabStylesheet).toContain(
+			".EasyMDEContainer .CodeMirror.tabmd-preview-mode .CodeMirror-scrollbar-filler,",
+		);
+		expect(newtabStylesheet).toContain(
+			".EasyMDEContainer .CodeMirror.tabmd-preview-mode .CodeMirror-gutter-filler {",
+		);
+		expect(newtabStylesheet).toContain("display: none !important;");
 	});
 });

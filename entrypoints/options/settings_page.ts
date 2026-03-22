@@ -693,7 +693,11 @@ async function initDriveBackupSection(documentRef: Document): Promise<void> {
 					const token = await getAuthToken(true);
 					currentToken = token;
 					isConnected = true;
-					const restored = await restoreFromBackup(fileId, token);
+					const restored = await restoreFromBackup(
+						fileId,
+						token,
+						button.dataset.fileName,
+					);
 					closeRestoreDialog();
 					setDriveStatus(
 						`Restore completed. ${restored.restoredNotes} note${restored.restoredNotes === 1 ? "" : "s"} restored.`,
