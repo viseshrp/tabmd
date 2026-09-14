@@ -55,6 +55,14 @@ describe("notes storage", () => {
 		expect(read).toBeNull();
 	});
 
+	it("does not write when deleting a missing note", async () => {
+		const storageSet = vi.spyOn(chrome.storage.local, "set");
+
+		await deleteNote("missing");
+
+		expect(storageSet).not.toHaveBeenCalled();
+	});
+
 	it("lists notes sorted by modifiedAt desc", async () => {
 		const note1 = {
 			id: "1",
@@ -138,6 +146,29 @@ describe("notes storage", () => {
 			"2",
 			"3",
 		]);
+		expect(selectRecentNotes(notes, 3).map((note) => note.id)).toEqual([
+			"2",
+			"3",
+			"1",
+		]);
+	});
+
+	it("ignores unrelated storage change events", () => {
+		const listener = vi.fn();
+		let storageHandler:
+			| Parameters<typeof chrome.storage.onChanged.addListener>[0]
+			| undefined;
+		vi.spyOn(chrome.storage.onChanged, "addListener").mockImplementation(
+			(handler) => {
+				storageHandler = handler;
+			},
+		);
+
+		subscribeToNotes(listener);
+		storageHandler?.({}, "local");
+		storageHandler?.({ [STORAGE_KEYS.notes]: { newValue: {} } }, "sync");
+
+		expect(listener).not.toHaveBeenCalled();
 	});
 
 	it("streams normalized note snapshots from storage change events", async () => {

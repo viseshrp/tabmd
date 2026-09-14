@@ -46,4 +46,20 @@ describe("utils", () => {
 		expect(completed.sort((left, right) => left - right)).toEqual([1, 2, 3, 4]);
 		expect(maxInFlight).toBeLessThanOrEqual(2);
 	});
+
+	it("skips worker creation when there is no work", async () => {
+		const task = vi.fn();
+
+		await runWithConcurrency([], 2, task);
+
+		expect(task).not.toHaveBeenCalled();
+	});
+
+	it("skips undefined work items", async () => {
+		const task = vi.fn();
+
+		await runWithConcurrency([undefined], 1, task);
+
+		expect(task).not.toHaveBeenCalled();
+	});
 });

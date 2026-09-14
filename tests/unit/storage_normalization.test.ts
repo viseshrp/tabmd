@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	normalizeNoteRecord,
 	normalizeNotesRecord,
+	normalizeSettings,
 } from "../../entrypoints/shared/storage";
 
 describe("storage normalization helpers", () => {
@@ -45,5 +46,33 @@ describe("storage normalization helpers", () => {
 				modifiedAt: 15,
 			},
 		});
+	});
+
+	it("rejects invalid note ids and non-object note values", () => {
+		expect(normalizeNoteRecord("", {})).toBeNull();
+		expect(normalizeNoteRecord("note-1", null)).toBeNull();
+		expect(normalizeNoteRecord("note-1", [])).toBeNull();
+	});
+
+	it("supplies safe defaults for missing note fields", () => {
+		expect(normalizeNoteRecord("note-1", {})).toEqual({
+			id: "note-1",
+			content: "",
+			title: null,
+			createdAt: 0,
+			modifiedAt: 0,
+		});
+	});
+
+	it("normalizes invalid settings and accepts supported themes", () => {
+		expect(normalizeSettings(null)).toEqual({ theme: "os" });
+		expect(normalizeSettings({ theme: "light" })).toEqual({ theme: "light" });
+		expect(normalizeSettings({ theme: "dark" })).toEqual({ theme: "dark" });
+		expect(normalizeSettings({ theme: "invalid" })).toEqual({ theme: "os" });
+	});
+
+	it("returns an empty map for malformed note dictionaries", () => {
+		expect(normalizeNotesRecord(null)).toEqual({});
+		expect(normalizeNotesRecord([])).toEqual({});
 	});
 });
